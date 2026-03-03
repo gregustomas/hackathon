@@ -4,7 +4,6 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
-  // 1. Inicializace Supabase
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -22,21 +21,42 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // 2. Zjistíme uživatele
+
   const { data: { user } } = await supabase.auth.getUser()
+
+  const { data: { session } } = await supabase.auth.getSession()
+  
   const path = request.nextUrl.pathname
 
-  // === A. ZÁKLADNÍ AUTH ===
-  if (!user && path.startsWith('/dashboard')) {
+  const aalLevel = session?.user?.app_metadata?.aal
+  
+
+  let hasMfaEnabled = false
+  if (user) {
+    const { data: mfaList } = await supabase.auth.mfa.listFactors()
+    hasMfaEnabled = !!(mfaList?.totp && mfaList.totp.length > 0)
+  }
+
+  if (!user && !path.startsWith('/login')) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (user && path === '/login') {
+  // if (user && hasMfaEnabled && aalLevel !== 'aal2' && path !== '/auth/mfa') {
+  //   return NextResponse.redirect(new URL('/auth/mfa', request.url))
+  // }
+
+  if (user && path === '/auth/mfa') {
+    if (!hasMfaEnabled || aalLevel === 'aal2') {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+  }
+
+  if (user && path.startsWith('/login')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // === B. RBAC (ROLE-BASED ACCESS CONTROL) ===
-  if (user && path.startsWith('/dashboard')) {
+
+  if (user && path.startsWith('/dashboard') && (!hasMfaEnabled || aalLevel === 'aal2')) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
@@ -66,6 +86,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard/admin', request.url))
     }
 
+    // OCHRANA PROTI NEKONEČNÉ SMYČCE
     if (path === '/dashboard' || path === '/dashboard/') {
       if (role === 'ADMIN') return NextResponse.redirect(new URL('/dashboard/admin', request.url))
       if (role === 'BANKER') return NextResponse.redirect(new URL('/dashboard/banker', request.url))

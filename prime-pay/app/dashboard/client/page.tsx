@@ -11,6 +11,11 @@ import {
 import { PaymentForm } from "@/components/client/payment-form";
 import { HistoryTable, type Transaction } from "@/components/client/history-table";
 import { RealtimeNotifications } from "@/components/client/realtime-notifications";
+import { createAdminClient } from '@/lib/supabase/server'
+import { CardDisplay } from "@/components/client/card-display";
+import { NewCardButton } from "@/components/client/new-card-button";
+import { SupabaseCardRow } from "../cards/page";
+
 
 export default async function ClientDashboard() {
     const cookieStore = await cookies();
@@ -38,18 +43,23 @@ export default async function ClientDashboard() {
         .eq("id", user.id)
         .single();
 
-    // 2. Získání účtu
-    const { data: account } = await supabase
+    const supabaseAdmin = await createAdminClient();
+
+    const { data: account, error: accountError } = await supabaseAdmin
         .from("accounts")
         .select("id, account_number, balance")
         .eq("profile_id", user.id)
         .single();
 
+    if (accountError) {
+        console.error("CHYBA NAČÍTÁNÍ ÚČTU:", accountError.message);
+    }
+
     if (!account)
         return <div className="py-10 cs-container">Účet nenalezen.</div>;
 
     // 3. Získání transakcí
-    const { data: rawTransactions } = await supabase
+    const { data: rawTransactions } = await supabaseAdmin
       .from('transactions')
       .select(`
         id, amount, description, created_at, from_account_id, to_account_id,
@@ -61,6 +71,32 @@ export default async function ClientDashboard() {
       .limit(10)
 
     const transactions = (rawTransactions as unknown) as Transaction[]
+
+    // 4. PŘIDÁME ZÍSKÁNÍ KARET PRO DASHBOARD
+    const { data: dbCards, error: cardsError } = await supabaseAdmin
+        .from('cards')
+        .select('*')
+        .eq('account_id', account.id)
+        .order('created_at', { ascending: false })
+        .overrideTypes<SupabaseCardRow[], {merge: false}>();
+
+    if (cardsError) {
+        console.error("Chyba při stahování karet:", cardsError);
+    }
+
+    const cards: SupabaseCardRow[] = (dbCards || []).map((card) => ({
+        id: card.id,
+        account_id: card.account_id,
+        card_number: card.card_number,
+        expiry_date: card.expiry_date, 
+        cvv: card.cvv,
+        is_active: card.is_active,
+        daily_limit: card.daily_limit,
+        atm_limit: card.atm_limit,
+        created_at: card.created_at,
+    }));
+
+
 
     return (
         <div className="space-y-8 py-8 cs-container">
@@ -119,7 +155,37 @@ export default async function ClientDashboard() {
                     </Card>
                 </div>
 
-                <div className="lg:col-span-2">
+                <div className="space-y-6 lg:col-span-2">
+                    
+                    {/* SEKCE: Moje karty */}
+                    <Card>
+                        <CardHeader className="flex flex-row justify-between items-center space-y-0">
+                            <div>
+                                <CardTitle>Moje virtuální karty</CardTitle>
+                                <CardDescription>
+                                    Spravujte karty pro platby na internetu
+                                </CardDescription>
+                            </div>
+                            {/* Zde voláme tlačítko, které spustí generování z action.ts */}
+                            <NewCardButton accountId={account.id} />
+                        </CardHeader>
+                        
+                        <CardContent>
+                            {cards.length === 0 ? (
+                                <div className="text-muted-foreground text-center">
+                                    Zatím nemáte žádnou aktivní kartu.
+                                </div>
+                            ) : (
+                                <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
+                                    {cards.map((card) => (
+                                        <CardDisplay key={card.id} card={card} />
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* SEKCE: Historie transakcí (ta už tam je z minula, jen ji nechat v Card kontejneru) */}
                     <Card className="h-full">
                         <CardHeader>
                             <CardTitle>Nedávné transakce</CardTitle>

@@ -8,7 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, CreditCard } from "lucide-react";
 
 export interface Transaction {
     id: string;
@@ -16,7 +16,6 @@ export interface Transaction {
     to_account_id: string;
     amount: number;
     description: string;
-    // Změna zde: Supabase vrací pole objektů, ne samotný objekt
     receiver: { account_number: string } | { account_number: string }[] | null;
     sender: { account_number: string } | { account_number: string }[] | null;
     created_at: string;
@@ -29,6 +28,7 @@ export function HistoryTable({
     transactions: Transaction[];
     currentAccountId: string;
 }) {
+
     if (transactions.length === 0) {
         return (
             <div className="py-8 text-muted-foreground text-center">
@@ -51,8 +51,15 @@ export function HistoryTable({
                 </TableHeader>
                 <TableBody>
                     {transactions.map((tx) => {
-                        const isOutgoing =
-                            tx.from_account_id === currentAccountId;
+                        const isOutgoing = tx.from_account_id === currentAccountId;
+                        
+                        // ZJIŠŤOVÁNÍ TYPU PLATBY (pouze pro tento jeden konkrétní řádek)
+                        const safeDescription = tx.description || "";
+                        const isCardPayment = safeDescription.startsWith('[KARTA]');
+                        const cleanDescription = isCardPayment 
+                            ? safeDescription.replace('[KARTA] ', '').replace('[KARTA]', '') 
+                            : safeDescription;
+
                         const date = new Date(tx.created_at).toLocaleDateString(
                             "cs-CZ",  
                             {
@@ -64,8 +71,8 @@ export function HistoryTable({
                             },
                         );
 
+                        // Určení protistrany
                         let targetAccount = 'Neznámý účet';
-                        
                         if (isOutgoing && tx.receiver) {
                             targetAccount = Array.isArray(tx.receiver) 
                                 ? tx.receiver[0]?.account_number 
@@ -76,10 +83,22 @@ export function HistoryTable({
                                 : tx.sender.account_number;
                         }
 
+                        // Pokud je to karetní platba, změníme i zobrazení "Protistrany"
+                        // aby se neukazovalo nudné ID obchodníka, ale nápis "Obchodník / Terminál"
+                        if (isCardPayment && targetAccount !== 'Neznámý účet') {
+                            targetAccount = `Obchodník (ID: ${targetAccount})`;
+                        }
+
                         return (
                             <TableRow key={tx.id} suppressHydrationWarning>
                                 <TableCell>
-                                    {isOutgoing ? (
+                                    {/* Rozlišení odznáčků (Badge) pro typ transakce */}
+                                    {isCardPayment ? (
+                                        <span className="flex items-center bg-blue-500/10 px-2 py-1 rounded-md w-fit font-medium text-blue-500 text-xs">
+                                            <CreditCard className="mr-1 w-3 h-3" />{" "}
+                                            Platba kartou
+                                        </span>
+                                    ) : isOutgoing ? (
                                         <span className="flex items-center bg-red-500/10 px-2 py-1 rounded-md w-fit font-medium text-red-500 text-xs">
                                             <ArrowUpRight className="mr-1 w-3 h-3" />{" "}
                                             Odesláno
@@ -92,7 +111,7 @@ export function HistoryTable({
                                     )}
                                 </TableCell>
 
-                                {/* Vykreslení čísla účtu protistrany */}
+                                {/* Vykreslení čísla účtu / obchodníka */}
                                 <TableCell className="font-mono text-sm">
                                     {targetAccount || "Neznámý účet"}
                                 </TableCell>
@@ -100,14 +119,15 @@ export function HistoryTable({
                                 <TableCell className="text-muted-foreground text-sm">
                                     {date}
                                 </TableCell>
-                                <TableCell>{tx.description || "-"}</TableCell>
+                                
+                                {/* Čistý popis bez ošklivého [KARTA] */}
+                                <TableCell>{cleanDescription || "-"}</TableCell>
+                                
                                 <TableCell
                                     className={`text-right font-bold ${isOutgoing ? "" : "text-green-500"}`}
                                 >
                                     {isOutgoing ? "-" : "+"}
-                                    {Number(tx.amount).toLocaleString(
-                                        "cs-CZ",
-                                    )}{" "}
+                                    {Number(tx.amount).toLocaleString("cs-CZ")}{" "}
                                     CZK
                                 </TableCell>
                             </TableRow>

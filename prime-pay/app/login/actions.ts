@@ -20,7 +20,6 @@ export async function login(prevState: ActionState, formData: FormData): Promise
     return { error: 'Špatný email nebo heslo.' }
   }
 
-  // KONTROLA MFA (Dvoufázové ověření)
   const { data: factors, error: mfaError } = await supabase.auth.mfa.listFactors()
   
   if (!mfaError && factors && factors.totp && factors.totp.length > 0) {
@@ -39,16 +38,13 @@ export async function signup(prevState: ActionState, formData: FormData): Promis
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const confirmPassword = formData.get('confirmPassword') as string
-  const firstName = formData.get('firstName') as string
-  const lastName = formData.get('lastName') as string
-  const phone = formData.get('phone') as string
-
+  
   if (password !== confirmPassword) {
     return { error: 'Hesla se neshodují.' }
   }
   
   if (password.length < 8) {
-     return { error: 'Heslo musí mít alespoň 8 znaků.' }
+      return { error: 'Heslo musí mít alespoň 8 znaků.' }
   }
 
   // 1. Vytvoření uživatele
@@ -66,10 +62,13 @@ export async function signup(prevState: ActionState, formData: FormData): Promis
     .from('profiles')
     .insert([{
       id: authData.user.id,
-      first_name: firstName,
-      last_name: lastName,
-      email: email,
-      phone: phone || null, // Volitelné, ale doporučené
+      first_name: formData.get('firstName'),
+      last_name: formData.get('lastName'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      street: formData.get('street'),   // Nové
+      city: formData.get('city'),       // Nové
+      zip_code: formData.get('zipCode'), // Nové
       role: 'CLIENT'
     }])
 
@@ -78,7 +77,11 @@ export async function signup(prevState: ActionState, formData: FormData): Promis
   }
 
   // 3. Založení bankovního účtu s bonusem
-  const accountNumber = Math.floor(1000000000 + Math.random() * 9000000000).toString()
+  const BANK_CODE = '8888' 
+  
+  // Bezpečnější vygenerování 10místného čísla vyplněného nulami (např. 0012345678)
+  const randomCore = Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')
+  const accountNumber = `${randomCore}/${BANK_CODE}`
   
   const { error: accountError } = await supabaseAdmin
     .from('accounts')
@@ -87,6 +90,7 @@ export async function signup(prevState: ActionState, formData: FormData): Promis
       account_number: accountNumber,
       balance: 1000.00
     }])
+
 
   if (accountError) {
     return { error: `Nelze vytvořit bankovní účet: ${accountError.message}` }

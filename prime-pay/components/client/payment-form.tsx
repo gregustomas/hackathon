@@ -1,20 +1,11 @@
 "use client";
 
-import {
-    useActionState,
-    useEffect,
-    useRef,
-    startTransition,
-    useState,
-} from "react";
-import {
-    processPayment,
-    type PaymentState,
-} from "@/app/dashboard/client/actions";
+import { useRef, useState } from "react";
+import { processPayment } from "@/app/dashboard/client/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { SendIcon } from "lucide-react";
+import { SendIcon, CreditCard, ArrowRightLeft, Loader2 } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -23,6 +14,8 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils"; 
+
 export function PaymentForm({
     senderAccountId,
     currentBalance,
@@ -30,115 +23,135 @@ export function PaymentForm({
     senderAccountId: string;
     currentBalance: number;
 }) {
-    const [state, formAction, isPending] = useActionState(processPayment, {
-        error: null,
-    });
     const formRef = useRef<HTMLFormElement>(null);
     const [isOpen, setIsOpen] = useState(false);
+    const [isPending, setIsPending] = useState(false);
+    const [paymentType, setPaymentType] = useState<"TRANSFER" | "CARD">("TRANSFER");
 
-    useEffect(() => {
-        if (state.error) {
-            toast.error("Platba selhala", { description: state.error });
-        }
-        if (state.success) {
-            toast.success("Platba byla úspěšná!");
-            formRef.current?.reset();
-        }
-    }, [state]);
-
-    const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setIsPending(true);
 
-        const formData = new FormData(e.currentTarget);
-        formData.append("idempotencyKey", crypto.randomUUID());
-        startTransition(() => {
-            formAction(formData);
-        });
+        try {
+            const formData = new FormData(e.currentTarget);
+            formData.append("idempotencyKey", crypto.randomUUID());
+            formData.append("paymentType", paymentType);
+       
+            const result = await processPayment({error: null }, formData);
+
+            if (result?.error) {
+                toast.error("Platba selhala", { description: result.error });
+            } else if (result?.success) {
+                toast.success("Platba byla úspěšná!");
+                formRef.current?.reset();
+                setIsOpen(false);
+            }
+        } catch (err) {
+            toast.error("Nastala nečekaná chyba.");
+        } finally {
+            setIsPending(false);
+        }
     };
 
     return (
-        <>
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogTrigger asChild>
-                    <Button>Začít</Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Nová platba</DialogTitle>
-                        <DialogDescription>
-                            Zde můžete vyplnit detaily platby.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form
-                                onSubmit={handleSubmit}
-                                ref={formRef}
-                                className="space-y-4"
-                            >
-                                <input
-                                    type="hidden"
-                                    name="senderAccountId"
-                                    value={senderAccountId}
-                                />
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button>Nová platba</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+                {/* Zbytek zůstává úplně stejný, jen isPending místo "Zpracovávám" ukáže i hezký spinner */}
+                <DialogHeader>
+                    <DialogTitle>Nová platba</DialogTitle>
+                    <DialogDescription>
+                        Vyberte způsob platby a vyplňte detaily.
+                    </DialogDescription>
+                </DialogHeader>
 
-                                <div className="space-y-2">
-                                    <label className="font-medium text-sm">
-                                        Číslo účtu příjemce
-                                    </label>
-                                    <Input
-                                        name="accountNumber"
-                                        required
-                                        placeholder="Např. 1234567890"
-                                        pattern="\d+"
-                                    />
-                                </div>
+                <div className="gap-2 grid grid-cols-2 bg-muted mb-4 p-1 rounded-lg">
+                    <button
+                        type="button"
+                        onClick={() => setPaymentType("TRANSFER")}
+                        className={cn(
+                            "flex justify-center items-center gap-2 px-3 py-2 rounded-md font-medium text-sm transition-all",
+                            paymentType === "TRANSFER" 
+                                ? "bg-background text-foreground shadow-sm" 
+                                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                        )}
+                    >
+                        <ArrowRightLeft className="w-4 h-4" />
+                        Převod na účet
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setPaymentType("CARD")}
+                        className={cn(
+                            "flex justify-center items-center gap-2 px-3 py-2 rounded-md font-medium text-sm transition-all",
+                            paymentType === "CARD" 
+                                ? "bg-background text-foreground shadow-sm" 
+                                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                        )}
+                    >
+                        <CreditCard className="w-4 h-4" />
+                        Platba kartou
+                    </button>
+                </div>
 
-                                <div className="space-y-2">
-                                    <label className="font-medium text-sm">
-                                        Částka (CZK)
-                                    </label>
-                                    <Input
-                                        name="amount"
-                                        type="number"
-                                        min="1"
-                                        max={currentBalance}
-                                        step="0.01"
-                                        required
-                                        placeholder="0.00"
-                                    />
-                                    <p className="text-muted-foreground text-xs">
-                                        Maximum k odeslání:{" "}
-                                        {currentBalance.toLocaleString()} CZK
-                                    </p>
-                                </div>
+                <form onSubmit={handleSubmit} ref={formRef} className="space-y-4">
+                    <input type="hidden" name="senderAccountId" value={senderAccountId} />
 
-                                <div className="space-y-2">
-                                    <label className="font-medium text-sm">
-                                        Zpráva pro příjemce
-                                    </label>
-                                    <Input
-                                        name="description"
-                                        placeholder="Např. Za oběd..."
-                                        maxLength={140}
-                                    />
-                                </div>
+                    <div className="space-y-2">
+                        <label className="font-medium text-sm">
+                            {paymentType === "TRANSFER" ? "Číslo účtu příjemce" : "Identifikátor obchodníka / Terminálu"}
+                        </label>
+                        <Input
+                            name="accountNumber"
+                            required
+                            placeholder={paymentType === "TRANSFER" ? "Např. 1234567890" : "ID Obchodníka"}
+                        />
+                    </div>
 
-                                <Button
-                                    type="submit"
-                                    className="w-full"
-                                    disabled={isPending}
-                                >
-                                    {isPending ? (
-                                        "Zpracovávám..."
-                                    ) : (
-                                        <>
-                                            <SendIcon className="mr-2 w-4 h-4" />
-                                            Odeslat platbu
-                                        </>
-                                    )}
-                                </Button>
-                            </form>
-                </DialogContent>
-            </Dialog>
-        </>
+                    <div className="space-y-2">
+                        <label className="font-medium text-sm">Částka (CZK)</label>
+                        <Input
+                            name="amount"
+                            type="number"
+                            min="1"
+                            max={currentBalance}
+                            step="0.01"
+                            required
+                            placeholder="0.00"
+                        />
+                        <p className="text-muted-foreground text-xs">
+                            Maximum k odeslání: {currentBalance.toLocaleString()} CZK
+                        </p>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="font-medium text-sm">
+                            {paymentType === "TRANSFER" ? "Zpráva pro příjemce" : "Popis platby"}
+                        </label>
+                        <Input
+                            name="description"
+                            placeholder={paymentType === "TRANSFER" ? "Např. Za oběd..." : "Nákup v eshopu"}
+                            maxLength={140}
+                        />
+                    </div>
+
+                    <Button type="submit" className="w-full" disabled={isPending}>
+                        {isPending ? (
+                            <>
+                                <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                                Zpracovávám...
+                            </>
+                        ) : (
+                            <>
+                                {paymentType === "TRANSFER" ? <SendIcon className="mr-2 w-4 h-4" /> : <CreditCard className="mr-2 w-4 h-4" />}
+                                {paymentType === "TRANSFER" ? "Odeslat platbu" : "Zaplatit kartou"}
+                            </>
+                        )}
+                    </Button>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }
