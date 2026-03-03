@@ -16,6 +16,7 @@ import { CardDisplay } from "@/components/client/card-display";
 import { NewCardButton } from "@/components/client/new-card-button";
 import { SupabaseCardRow } from "../cards/page";
 import { LoanRequestForm } from "@/components/client/loan-request-form";
+import { TransactionsCharts } from "@/components/client/transaction-charts";
 
 export default async function ClientDashboard() {
     const cookieStore = await cookies();
@@ -206,9 +207,13 @@ export default async function ClientDashboard() {
                             )}
                         </CardContent>
                     </Card>
+                    <TransactionsCharts 
+                        transactions={transactions} 
+                        currentAccountId={account.id} 
+                    />
 
                     {/* SEKCE: Historie transakcí */}
-                    <Card className="flex flex-col h-full">
+                    <Card >
                         <CardHeader>
                             <CardTitle>Nedávné transakce</CardTitle>
                             <CardDescription>

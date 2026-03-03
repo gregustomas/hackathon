@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { revalidatePath } from "next/cache";
 import { Client, Account, PendingLoan } from "@/interfaces/banker";
+import { ClientManagerRow } from "@/components/banker/client-manager-row";
 
 export default async function BankerDashboard() {
     const cookieStore = await cookies();
@@ -161,29 +162,12 @@ export default async function BankerDashboard() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Aktivní klienti</CardTitle>
-                        <CardDescription>Rychlý přehled stavu účtů</CardDescription>
+                        <CardDescription>Rychlý přehled stavu účtů a správa</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
+                    <CardContent className="p-0">
+                        <div className="flex flex-col">
                             {clients?.map((client: Client) => (
-                                <div key={client.id} className="flex justify-between items-center p-3 last:border-0 border-b">
-                                    <div>
-                                        <p className="font-medium">{client.first_name} {client.last_name}</p>
-                                        <p className="text-muted-foreground text-xs">{client.email}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        {client.accounts && client.accounts.length > 0 ? (
-                                            client.accounts.map((acc: Account) => (
-                                                <div key={acc.id} className="text-sm">
-                                                    <span className="mr-2 text-muted-foreground">{acc.account_number}</span>
-                                                    <span className="font-bold">{Number(acc.balance).toLocaleString("cs-CZ")} Kč</span>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <Badge variant="outline">Bez účtu</Badge>
-                                        )}
-                                    </div>
-                                </div>
+                                <ClientManagerRow key={client.id} client={client} />
                             ))}
                         </div>
                     </CardContent>

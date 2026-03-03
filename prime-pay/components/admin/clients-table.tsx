@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import type { Client } from "@/app/dashboard/admin/actions"
+import { Client } from "@/interfaces/admin"
 import {
   useReactTable,
   getCoreRowModel,
@@ -32,6 +32,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { toggleUserStatus } from "@/app/dashboard/admin/actions"
+
 
 interface Props {
   clients: Client[]
@@ -49,17 +51,34 @@ export default function ClientsTable({ clients: initialData, title }: Props) {
   const entityLabel = isBanker ? "bankéře" : "klienta"
   const entityName = isBanker ? "Bankéř" : "Klient"
 
-  function handleStatusToggle() {
-    if (!pendingAction) return
-    const { client, type } = pendingAction
-    const newStatus = type === "block" ? "blocked" : "active"
+    async function handleStatusToggle() {
+    if (!pendingAction) return;
+    
+    // Uložíme si data, abychom mohli hned zavřít modal
+    const { client, type } = pendingAction;
+    setPendingAction(null); // Zavře modal hned po kliknutí pro lepší pocit odezvy
+    
+    const currentStatus = type === "block" ? "active" : "blocked";
 
+    // Můžeme udělat i tzv. Optimistic Update (hned si změnit lokální stav, ať nečekáme na DB)
     setClients((prev) =>
       prev.map((c) =>
-        c.id === client.id ? { ...c, status: newStatus as "active" | "blocked" } : c
+        c.id === client.id ? { ...c, status: type === "block" ? "blocked" : "active" } : c
       )
-    )
-    setPendingAction(null)
+    );
+
+    // Volaání na pozadí do Supabase
+    const result = await toggleUserStatus(client.id, currentStatus);
+    
+    if (!result.success) {
+        // Pokud se to náhodou nepovedlo, vrátíme lokální state zpět a můžeme ukázat třeba toast notifikaci
+        setClients((prev) =>
+          prev.map((c) =>
+            c.id === client.id ? { ...c, status: currentStatus } : c
+          )
+        );
+        alert("Nepodařilo se změnit stav: " + result.message);
+    }
   }
 
   const filteredByTab = useMemo(() => {
@@ -95,19 +114,26 @@ export default function ClientsTable({ clients: initialData, title }: Props) {
       cell: ({ getValue }) => {
         const status = getValue() as string
         return (
-          <Badge variant={status === "active" ? "outline" : "destructive"} className="capitalize">
+          <Badge variant={status === "active" ? "success" : "destructive"} className="capitalize">
             {status === "active" ? "Aktivní" : "Blokovaný"}
           </Badge>
         )
       },
     },
-    {
-      accessorKey: "balance",
+    {  
+      id: "balance", 
       header: "Zůstatek",
+      accessorFn: (row) => {
+        // Linter teď ví, že 'row' je 'Client' a že 'Client' obsahuje 'accounts'
+        if (row.accounts && row.accounts.length > 0) {
+            return row.accounts[0].balance;
+        }
+        return null;
+      },
       cell: ({ getValue }) => {
         const val = getValue() as number | null
         return (
-          <span className="font-mono text-sm font-semibold">
+          <span className="font-mono font-semibold text-sm">
             {val !== null && val !== undefined
               ? val.toLocaleString("cs-CZ") + " CZK"
               : "0 CZK"}
@@ -119,7 +145,7 @@ export default function ClientsTable({ clients: initialData, title }: Props) {
       accessorKey: "created_at",
       header: "Registrace",
       cell: ({ getValue }) => (
-        <span className="text-muted-foreground font-mono text-xs">
+        <span className="font-mono text-muted-foreground text-xs">
           {new Date(getValue() as string).toLocaleDateString("cs-CZ")}
         </span>
       ),
@@ -164,17 +190,17 @@ export default function ClientsTable({ clients: initialData, title }: Props) {
   })
 
   return (
-    <div className="py-12 px-4 md:px-10 w-full">
+    <div className="px-4 md:px-10 py-12 w-full">
       {/* Header section */}
       <div className="mb-7">
-        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <h1 className="font-bold text-3xl tracking-tight">{title}</h1>
+        <p className="mt-1 text-muted-foreground text-sm">
           {clients.length} registrovaných profilů v roli {entityName}
         </p>
       </div>
 
       {/* Controls section */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+      <div className="flex md:flex-row flex-col justify-between items-start md:items-center gap-4 mb-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
           <TabsList className="bg-muted/50">
             <TabsTrigger value="all">Všichni</TabsTrigger>
@@ -187,18 +213,18 @@ export default function ClientsTable({ clients: initialData, title }: Props) {
           placeholder={`Hledat ${entityLabel}...`}
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
-          className="max-w-sm bg-card"
+          className="bg-card max-w-sm"
         />
       </div>
 
       {/* Table section - Full Width */}
-      <div className="rounded-xl border border-border overflow-hidden bg-card shadow-sm">
+      <div className="bg-card shadow-sm border border-border rounded-xl overflow-hidden">
         <Table>
           <TableHeader className="bg-muted/30">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="uppercase tracking-widest text-[10px] font-bold py-4">
+                  <TableHead key={header.id} className="py-4 font-bold text-[10px] uppercase tracking-widest">
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
@@ -208,7 +234,7 @@ export default function ClientsTable({ clients: initialData, title }: Props) {
           <TableBody>
             {table.getRowModel().rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="py-20 text-center text-muted-foreground italic">
+                <TableCell colSpan={columns.length} className="py-20 text-muted-foreground text-center italic">
                   Nenalezeni žádní {isBanker ? "bankéři" : "klienti"} odpovídající výběru
                 </TableCell>
               </TableRow>
@@ -231,9 +257,9 @@ export default function ClientsTable({ clients: initialData, title }: Props) {
       </div>
 
       {/* Pagination section */}
-      <div className="flex items-center justify-between mt-6">
-        <p className="text-sm text-muted-foreground">
-          Strana <span className="text-foreground font-medium">{table.getState().pagination.pageIndex + 1}</span> z <span className="text-foreground font-medium">{table.getPageCount()}</span>
+      <div className="flex justify-between items-center mt-6">
+        <p className="text-muted-foreground text-sm">
+          Strana <span className="font-medium text-foreground">{table.getState().pagination.pageIndex + 1}</span> z <span className="font-medium text-foreground">{table.getPageCount()}</span>
         </p>
         <div className="flex gap-2">
           <Button 

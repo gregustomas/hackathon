@@ -46,7 +46,7 @@ export function CardDisplay({ card }: { card: CardProps }) {
       </div>
 
       {/* Číslo karty (teď už 100% bezpečně) */}
-      <div className="mb-4 font-mono text-2xl tracking-widest">
+      <div className="mb-4 font-mono text-xl tracking-widest">
         {formatCardNumber(card.card_number)}
       </div>
 

@@ -9,17 +9,35 @@ export type ActionState = {
 }
 
 export async function login(prevState: ActionState, formData: FormData): Promise<ActionState> {
+  // Inicializujeme jak normálního, tak i admin klienta
   const supabase = await createClient()
+  const supabaseAdmin = await createAdminClient()
 
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
+  // 1. Zkusíme uživatele přihlásit
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
+    // 2. Pokud přihlášení selže, zjistíme, jestli to není kvůli BANu.
+    // Použijeme k tomu Admin klienta (obejde RLS), aby se jen nenápadně podíval na `is_active` v profilech
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('is_active')
+      .eq('email', email)
+      .maybeSingle()
+
+    // 3. Pokud profil existuje a `is_active` je false, vypíšeme mu jasnou hlášku
+    if (profile && profile.is_active === false) {
+      return { error: 'Váš účet byl dočasně zablokován administrátorem.' }
+    }
+
+    // 4. Pokud to není ban, prostě vypsat, že zadal blbosti
     return { error: 'Špatný email nebo heslo.' }
   }
 
+  // Přihlášení bylo úspěšné - kontrola 2FA
   const { data: factors, error: mfaError } = await supabase.auth.mfa.listFactors()
   
   if (!mfaError && factors && factors.totp && factors.totp.length > 0) {
@@ -29,6 +47,7 @@ export async function login(prevState: ActionState, formData: FormData): Promise
   revalidatePath('/', 'layout')
   redirect('/dashboard')
 }
+
 
 export async function signup(prevState: ActionState, formData: FormData): Promise<ActionState> {
   const supabase = await createClient()
