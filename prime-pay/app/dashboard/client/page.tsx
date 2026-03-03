@@ -9,7 +9,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PaymentForm } from "@/components/client/payment-form";
-import { HistoryTable } from "@/components/client/history-table";
+import { HistoryTable, type Transaction } from "@/components/client/history-table";
+import { RealtimeNotifications } from "@/components/client/realtime-notifications";
 
 export default async function ClientDashboard() {
   const cookieStore = await cookies();
@@ -60,6 +61,19 @@ export default async function ClientDashboard() {
     .or(`from_account_id.eq.${account.id},to_account_id.eq.${account.id}`)
     .order("created_at", { ascending: false })
     .limit(10);
+    // 3. Získání transakcí
+    const { data: rawTransactions } = await supabase
+      .from('transactions')
+      .select(`
+        id, amount, description, created_at, from_account_id, to_account_id,
+        sender:from_account_id (account_number),
+        receiver:to_account_id (account_number)
+      `)
+      .or(`from_account_id.eq.${account.id},to_account_id.eq.${account.id}`)
+      .order('created_at', { ascending: false })
+      .limit(10)
+
+    const transactions = (rawTransactions as unknown) as Transaction[]
 
   return (
     <div className="space-y-8 py-8 cs-container">
@@ -74,6 +88,21 @@ export default async function ClientDashboard() {
           </p>
         </div>
       </header>
+    return (
+        <div className="space-y-8 py-8 cs-container">
+
+          <RealtimeNotifications accountId={account.id} />
+            {/* Header */}
+            <header className="flex md:flex-row flex-col justify-between md:items-end gap-4">
+                <div>
+                    <h1 className="font-bold text-3xl tracking-tight">
+                        Vítejte, {profile?.first_name}
+                    </h1>
+                    <p className="text-muted-foreground">
+                        Přehled vašeho bankovního účtu
+                    </p>
+                </div>
+            </header>
 
       <div className="gap-6 grid grid-cols-1 lg:grid-cols-3">
         {/* Levý sloupec: Zůstatek a Platba */}
@@ -109,24 +138,23 @@ export default async function ClientDashboard() {
           </Card>
         </div>
 
-        {/* Pravý sloupec: Historie transakcí */}
-        <div className="lg:col-span-2">
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Nedávné transakce</CardTitle>
-              <CardDescription>
-                Posledních 10 pohybů na vašem účtu
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <HistoryTable
-                transactions={transactions as any || []}
-                currentAccountId={account.id}
-              />
-            </CardContent>
-          </Card>
+                <div className="lg:col-span-2">
+                    <Card className="h-full">
+                        <CardHeader>
+                            <CardTitle>Nedávné transakce</CardTitle>
+                            <CardDescription>
+                                Posledních 10 pohybů na vašem účtu
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <HistoryTable 
+                                transactions={transactions || []}
+                                currentAccountId={account.id}
+                            />
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

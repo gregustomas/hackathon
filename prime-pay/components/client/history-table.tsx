@@ -10,14 +10,15 @@ import {
 } from "@/components/ui/table";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
-interface Transaction {
+export interface Transaction {
     id: string;
     from_account_id: string;
     to_account_id: string;
     amount: number;
     description: string;
-    receiver: { account_number: string } | null;
-    sender: { account_number: string } | null;
+    // Změna zde: Supabase vrací pole objektů, ne samotný objekt
+    receiver: { account_number: string } | { account_number: string }[] | null;
+    sender: { account_number: string } | { account_number: string }[] | null;
     created_at: string;
 }
 
@@ -37,12 +38,12 @@ export function HistoryTable({
     }
 
     return (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" suppressHydrationWarning>
             <Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead>Typ</TableHead>
-                        <TableHead>Protistrana</TableHead> {/* Nový sloupec */}
+                        <TableHead>Protistrana</TableHead>
                         <TableHead>Datum</TableHead>
                         <TableHead>Popis</TableHead>
                         <TableHead className="text-right">Částka</TableHead>
@@ -53,7 +54,7 @@ export function HistoryTable({
                         const isOutgoing =
                             tx.from_account_id === currentAccountId;
                         const date = new Date(tx.created_at).toLocaleDateString(
-                            "cs-CZ",
+                            "cs-CZ",  
                             {
                                 day: "2-digit",
                                 month: "2-digit",
@@ -63,10 +64,17 @@ export function HistoryTable({
                             },
                         );
 
-                        // Zjištění čísla účtu protistrany z joinnutých dat
-                        const targetAccount = isOutgoing
-                            ? tx.receiver?.account_number
-                            : tx.sender?.account_number;
+                        let targetAccount = 'Neznámý účet';
+                        
+                        if (isOutgoing && tx.receiver) {
+                            targetAccount = Array.isArray(tx.receiver) 
+                                ? tx.receiver[0]?.account_number 
+                                : tx.receiver.account_number;
+                        } else if (!isOutgoing && tx.sender) {
+                            targetAccount = Array.isArray(tx.sender) 
+                                ? tx.sender[0]?.account_number 
+                                : tx.sender.account_number;
+                        }
 
                         return (
                             <TableRow key={tx.id} suppressHydrationWarning>

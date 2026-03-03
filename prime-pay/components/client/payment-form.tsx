@@ -66,7 +66,10 @@ export function PaymentForm({
                     <DialogHeader>
                         <DialogTitle>Nová platba</DialogTitle>
                         <DialogDescription>
-                            <form
+                            Zde můžete vyplnit detaily platby.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form
                                 onSubmit={handleSubmit}
                                 ref={formRef}
                                 className="space-y-4"
@@ -134,8 +137,6 @@ export function PaymentForm({
                                     )}
                                 </Button>
                             </form>
-                        </DialogDescription>
-                    </DialogHeader>
                 </DialogContent>
             </Dialog>
         </>
