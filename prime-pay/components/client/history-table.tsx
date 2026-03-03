@@ -16,6 +16,8 @@ interface Transaction {
     to_account_id: string;
     amount: number;
     description: string;
+    receiver: { account_number: string } | null;
+    sender: { account_number: string } | null;
     created_at: string;
 }
 
@@ -40,6 +42,7 @@ export function HistoryTable({
                 <TableHeader>
                     <TableRow>
                         <TableHead>Typ</TableHead>
+                        <TableHead>Protistrana</TableHead> {/* Nový sloupec */}
                         <TableHead>Datum</TableHead>
                         <TableHead>Popis</TableHead>
                         <TableHead className="text-right">Částka</TableHead>
@@ -60,6 +63,11 @@ export function HistoryTable({
                             },
                         );
 
+                        // Zjištění čísla účtu protistrany z joinnutých dat
+                        const targetAccount = isOutgoing
+                            ? tx.receiver?.account_number
+                            : tx.sender?.account_number;
+
                         return (
                             <TableRow key={tx.id}>
                                 <TableCell>
@@ -75,6 +83,12 @@ export function HistoryTable({
                                         </span>
                                     )}
                                 </TableCell>
+
+                                {/* Vykreslení čísla účtu protistrany */}
+                                <TableCell className="font-mono text-sm">
+                                    {targetAccount || "Neznámý účet"}
+                                </TableCell>
+
                                 <TableCell className="text-muted-foreground text-sm">
                                     {date}
                                 </TableCell>

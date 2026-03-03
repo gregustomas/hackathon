@@ -63,7 +63,7 @@ export function PaymentForm({
                     <Button>Začít</Button>
                 </DialogTrigger>
                 <DialogContent>
-                    <DialogHeader className="flex items-center jusitfy-between">
+                    <DialogHeader>
                         <DialogTitle>Nová platba</DialogTitle>
                         <DialogDescription>
                             <form

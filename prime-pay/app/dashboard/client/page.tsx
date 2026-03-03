@@ -50,7 +50,13 @@ export default async function ClientDashboard() {
     // 3. Získání transakcí
     const { data: transactions } = await supabase
         .from("transactions")
-        .select("*")
+        .select(
+            `
+      id, amount, description, created_at, from_account_id, to_account_id,
+      sender:from_account_id (account_number),
+      receiver:to_account_id (account_number)
+    `,
+        )
         .or(`from_account_id.eq.${account.id},to_account_id.eq.${account.id}`)
         .order("created_at", { ascending: false })
         .limit(10);
@@ -94,7 +100,7 @@ export default async function ClientDashboard() {
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className="flex">
                         <CardHeader>
                             <CardTitle>Nová platba</CardTitle>
                             <CardDescription>
