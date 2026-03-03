@@ -12,7 +12,7 @@ import { PaymentForm } from "@/components/client/payment-form";
 import { HistoryTable, type Transaction } from "@/components/client/history-table";
 import { RealtimeNotifications } from "@/components/client/realtime-notifications";
 
-export default async function ClientDashboard() {
+export default async function AdminDashboard() {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
