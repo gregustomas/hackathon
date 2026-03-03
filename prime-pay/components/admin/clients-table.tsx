@@ -35,15 +35,20 @@ import {
 
 interface Props {
   clients: Client[]
+  title: string
 }
 
-export default function ClientsTable({ clients: initialData }: Props) {
+export default function ClientsTable({ clients: initialData, title }: Props) {
   const [clients, setClients] = useState<Client[]>(initialData)
   const [pendingAction, setPendingAction] = useState<{ client: Client, type: "block" | "unblock" } | null>(null)
   const [globalFilter, setGlobalFilter] = useState("")
   const [activeTab, setActiveTab] = useState("all")
 
-  // Funkce pro přepnutí statusu (používá is_active logiku z DB)
+  // Pomocná logika pro skloňování v textech
+  const isBanker = title.toLowerCase().includes("bankéř")
+  const entityLabel = isBanker ? "bankéře" : "klienta"
+  const entityName = isBanker ? "Bankéř" : "Klient"
+
   function handleStatusToggle() {
     if (!pendingAction) return
     const { client, type } = pendingAction
@@ -67,7 +72,7 @@ export default function ClientsTable({ clients: initialData }: Props) {
   const columns = useMemo<ColumnDef<Client>[]>(() => [
     {
       id: "name",
-      header: "Klient",
+      header: entityName,
       accessorFn: (row) => `${row.first_name} ${row.last_name}`,
       cell: ({ row, getValue }) => (
         <span className={`font-medium ${row.original.status === "blocked" ? "text-muted-foreground line-through" : ""}`}>
@@ -102,7 +107,7 @@ export default function ClientsTable({ clients: initialData }: Props) {
       cell: ({ getValue }) => {
         const val = getValue() as number | null
         return (
-          <span className="font-mono text-sm">
+          <span className="font-mono text-sm font-semibold">
             {val !== null && val !== undefined
               ? val.toLocaleString("cs-CZ") + " CZK"
               : "0 CZK"}
@@ -143,7 +148,7 @@ export default function ClientsTable({ clients: initialData }: Props) {
         )
       },
     },
-  ], [])
+  ], [entityName])
 
   const table = useReactTable({
     data: filteredByTab,
@@ -159,17 +164,19 @@ export default function ClientsTable({ clients: initialData }: Props) {
   })
 
   return (
-    <div className="py-12 px-4 max-w-7xl mx-auto">
+    <div className="py-12 px-4 md:px-10 w-full">
+      {/* Header section */}
       <div className="mb-7">
-        <h1 className="text-3xl font-bold tracking-tight">Správa klientů</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {clients.length} registrovaných profilů v systému
+          {clients.length} registrovaných profilů v roli {entityName}
         </p>
       </div>
 
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
+      {/* Controls section */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
+          <TabsList className="bg-muted/50">
             <TabsTrigger value="all">Všichni</TabsTrigger>
             <TabsTrigger value="active">Aktivní</TabsTrigger>
             <TabsTrigger value="blocked">Blokovaní</TabsTrigger>
@@ -177,20 +184,21 @@ export default function ClientsTable({ clients: initialData }: Props) {
         </Tabs>
 
         <Input
-          placeholder="Hledat klienta..."
+          placeholder={`Hledat ${entityLabel}...`}
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
-          className="max-w-sm"
+          className="max-w-sm bg-card"
         />
       </div>
 
-      <div className="rounded-xl border border-border overflow-hidden bg-card">
+      {/* Table section - Full Width */}
+      <div className="rounded-xl border border-border overflow-hidden bg-card shadow-sm">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted/30">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="uppercase tracking-widest text-[10px] font-bold">
+                  <TableHead key={header.id} className="uppercase tracking-widest text-[10px] font-bold py-4">
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
@@ -200,15 +208,18 @@ export default function ClientsTable({ clients: initialData }: Props) {
           <TableBody>
             {table.getRowModel().rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="py-12 text-center text-muted-foreground">
-                  Žádní klienti neodpovídají výběru
+                <TableCell colSpan={columns.length} className="py-20 text-center text-muted-foreground italic">
+                  Nenalezeni žádní {isBanker ? "bankéři" : "klienti"} odpovídající výběru
                 </TableCell>
               </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className={row.original.status === "blocked" ? "bg-muted/30" : ""}>
+                <TableRow 
+                  key={row.id} 
+                  className={`transition-colors ${row.original.status === "blocked" ? "bg-muted/20 opacity-75" : "hover:bg-muted/10"}`}
+                >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="py-4">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -219,21 +230,34 @@ export default function ClientsTable({ clients: initialData }: Props) {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between mt-4">
+      {/* Pagination section */}
+      <div className="flex items-center justify-between mt-6">
         <p className="text-sm text-muted-foreground">
-          Strana {table.getState().pagination.pageIndex + 1} z {table.getPageCount()}
+          Strana <span className="text-foreground font-medium">{table.getState().pagination.pageIndex + 1}</span> z <span className="text-foreground font-medium">{table.getPageCount()}</span>
         </p>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => table.previousPage()} 
+            disabled={!table.getCanPreviousPage()}
+            className="px-4"
+          >
             Předchozí
           </Button>
-          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => table.nextPage()} 
+            disabled={!table.getCanNextPage()}
+            className="px-4"
+          >
             Další
           </Button>
         </div>
       </div>
 
-      {/* Dynamic Action Dialog */}
+      {/* Dialog for blocking/unblocking */}
       <AlertDialog open={!!pendingAction} onOpenChange={(open) => !open && setPendingAction(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -241,7 +265,7 @@ export default function ClientsTable({ clients: initialData }: Props) {
               {pendingAction?.type === "block" ? "Zablokovat účet" : "Aktivovat účet"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Opravdu chcete {pendingAction?.type === "block" ? "zablokovat" : "odblokovat"} klienta{" "}
+              Opravdu chcete {pendingAction?.type === "block" ? "zablokovat" : "odblokovat"} {entityLabel}{" "}
               <span className="font-semibold text-foreground">
                 {pendingAction?.client.first_name} {pendingAction?.client.last_name}
               </span>?
