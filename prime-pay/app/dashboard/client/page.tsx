@@ -15,6 +15,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { CardDisplay } from "@/components/client/card-display";
 import { NewCardButton } from "@/components/client/new-card-button";
 import { SupabaseCardRow } from "../cards/page";
+import { LoanRequestForm } from "@/components/client/loan-request-form";
 
 export default async function ClientDashboard() {
     const cookieStore = await cookies();
@@ -90,8 +91,6 @@ export default async function ClientDashboard() {
         .select('*')
         .eq('account_id', account.id)
         .order('created_at', { ascending: false })
-        .returns<SupabaseCardRow[]>();
-
     if (cardsError) {
         console.error("Chyba při stahování karet:", cardsError.message);
     }
@@ -163,6 +162,21 @@ export default async function ClientDashboard() {
                             />
                         </CardContent>
                     </Card>
+
+                    <Card>
+                      <CardHeader>
+                          <CardTitle>Žádost o půjčku</CardTitle>
+                          <CardDescription>Rychlé financování online do pár minut.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                          <LoanRequestForm 
+                              profileId={user.id} 
+                              accountId={account.id} 
+                              currentBalance={Number(account.balance)} 
+                          />
+
+                      </CardContent>
+                  </Card>
                 </div>
 
                 <div className="space-y-6 lg:col-span-2">

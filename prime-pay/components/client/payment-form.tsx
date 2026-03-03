@@ -46,7 +46,7 @@ export function PaymentForm({
                 formRef.current?.reset();
                 setIsOpen(false);
             }
-        } catch (err) {
+        } catch  {
             toast.error("Nastala nečekaná chyba.");
         } finally {
             setIsPending(false);
@@ -58,8 +58,7 @@ export function PaymentForm({
             <DialogTrigger asChild>
                 <Button>Nová platba</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-                {/* Zbytek zůstává úplně stejný, jen isPending místo "Zpracovávám" ukáže i hezký spinner */}
+            <DialogContent className="sm:max-w-106.25">
                 <DialogHeader>
                     <DialogTitle>Nová platba</DialogTitle>
                     <DialogDescription>
@@ -91,7 +90,7 @@ export function PaymentForm({
                                 : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                         )}
                     >
-                        <CreditCard className="w-4 h-4" />
+                        <CreditCard className="size-4" />
                         Platba kartou
                     </button>
                 </div>
@@ -140,7 +139,7 @@ export function PaymentForm({
                     <Button type="submit" className="w-full" disabled={isPending}>
                         {isPending ? (
                             <>
-                                <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                                <Loader2 className="mr-2 size-4 animate-spin" />
                                 Zpracovávám...
                             </>
                         ) : (
