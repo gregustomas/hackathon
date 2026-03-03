@@ -9,7 +9,8 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { PaymentForm } from "@/components/client/payment-form";
-import { HistoryTable } from "@/components/client/history-table";
+import { HistoryTable, type Transaction } from "@/components/client/history-table";
+import { RealtimeNotifications } from "@/components/client/realtime-notifications";
 
 export default async function ClientDashboard() {
     const cookieStore = await cookies();
@@ -48,21 +49,23 @@ export default async function ClientDashboard() {
         return <div className="py-10 cs-container">Účet nenalezen.</div>;
 
     // 3. Získání transakcí
-    const { data: transactions } = await supabase
-        .from("transactions")
-        .select(
-            `
-      id, amount, description, created_at, from_account_id, to_account_id,
-      sender:from_account_id (account_number),
-      receiver:to_account_id (account_number)
-    `,
-        )
-        .or(`from_account_id.eq.${account.id},to_account_id.eq.${account.id}`)
-        .order("created_at", { ascending: false })
-        .limit(10);
+    const { data: rawTransactions } = await supabase
+      .from('transactions')
+      .select(`
+        id, amount, description, created_at, from_account_id, to_account_id,
+        sender:from_account_id (account_number),
+        receiver:to_account_id (account_number)
+      `)
+      .or(`from_account_id.eq.${account.id},to_account_id.eq.${account.id}`)
+      .order('created_at', { ascending: false })
+      .limit(10)
+
+    const transactions = (rawTransactions as unknown) as Transaction[]
 
     return (
         <div className="space-y-8 py-8 cs-container">
+
+          <RealtimeNotifications accountId={account.id} />
             {/* Header */}
             <header className="flex md:flex-row flex-col justify-between md:items-end gap-4">
                 <div>
@@ -116,7 +119,6 @@ export default async function ClientDashboard() {
                     </Card>
                 </div>
 
-                {/* Pravý sloupec: Historie transakcí */}
                 <div className="lg:col-span-2">
                     <Card className="h-full">
                         <CardHeader>
@@ -126,7 +128,7 @@ export default async function ClientDashboard() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <HistoryTable
+                            <HistoryTable 
                                 transactions={transactions || []}
                                 currentAccountId={account.id}
                             />
