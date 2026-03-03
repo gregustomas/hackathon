@@ -16,9 +16,10 @@ import { CardDisplay } from "@/components/client/card-display";
 import { NewCardButton } from "@/components/client/new-card-button";
 import { SupabaseCardRow } from "../cards/page";
 
-
 export default async function ClientDashboard() {
     const cookieStore = await cookies();
+    
+    // 1. Získání uživatele přes normálního klienta (kvůli cookies)
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -34,54 +35,65 @@ export default async function ClientDashboard() {
     const {
         data: { user },
     } = await supabase.auth.getUser();
+    
     if (!user) redirect("/login");
 
-    // 1. Získání profilu
-    const { data: profile } = await supabase
+    // 2. Vytvoření Admin klienta pro všechny databázové dotazy (obejití RLS)
+    const supabaseAdmin = await createAdminClient();
+
+    // 3. Získání profilu s bezpečnými limity
+    const { data: profile, error: profileError } = await supabaseAdmin
         .from("profiles")
         .select("first_name, last_name")
         .eq("id", user.id)
-        .single();
+        .limit(1)
+        .maybeSingle();
 
-    const supabaseAdmin = await createAdminClient();
+    if (profileError) {
+        console.error("CHYBA NAČÍTÁNÍ PROFILU:", profileError.message);
+    }
 
+    // 4. Získání účtu s bezpečnými limity
     const { data: account, error: accountError } = await supabaseAdmin
         .from("accounts")
         .select("id, account_number, balance")
         .eq("profile_id", user.id)
-        .single();
+        .limit(1)
+        .maybeSingle();
 
     if (accountError) {
         console.error("CHYBA NAČÍTÁNÍ ÚČTU:", accountError.message);
     }
 
-    if (!account)
-        return <div className="py-10 cs-container">Účet nenalezen.</div>;
+    // Pokud uživatel nemá účet, ukončíme renderování zde
+    if (!account) {
+        return <div className="py-10 cs-container">Účet nenalezen. Počkejte na jeho vytvoření nebo kontaktujte podporu.</div>;
+    }
 
-    // 3. Získání transakcí
+    // 5. Získání transakcí (účet už zaručeně existuje)
     const { data: rawTransactions } = await supabaseAdmin
-      .from('transactions')
-      .select(`
-        id, amount, description, created_at, from_account_id, to_account_id,
-        sender:from_account_id (account_number),
-        receiver:to_account_id (account_number)
-      `)
-      .or(`from_account_id.eq.${account.id},to_account_id.eq.${account.id}`)
-      .order('created_at', { ascending: false })
-      .limit(10)
+        .from('transactions')
+        .select(`
+            id, amount, description, created_at, from_account_id, to_account_id,
+            sender:from_account_id (account_number),
+            receiver:to_account_id (account_number)
+        `)
+        .or(`from_account_id.eq.${account.id},to_account_id.eq.${account.id}`)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-    const transactions = (rawTransactions as unknown) as Transaction[]
+    const transactions = (rawTransactions as unknown) as Transaction[];
 
-    // 4. PŘIDÁME ZÍSKÁNÍ KARET PRO DASHBOARD
+    // 6. Získání karet
     const { data: dbCards, error: cardsError } = await supabaseAdmin
         .from('cards')
         .select('*')
         .eq('account_id', account.id)
         .order('created_at', { ascending: false })
-        .overrideTypes<SupabaseCardRow[], {merge: false}>();
+        .returns<SupabaseCardRow[]>();
 
     if (cardsError) {
-        console.error("Chyba při stahování karet:", cardsError);
+        console.error("Chyba při stahování karet:", cardsError.message);
     }
 
     const cards: SupabaseCardRow[] = (dbCards || []).map((card) => ({
@@ -96,17 +108,15 @@ export default async function ClientDashboard() {
         created_at: card.created_at,
     }));
 
-
-
     return (
         <div className="space-y-8 py-8 cs-container">
-
-          <RealtimeNotifications accountId={account.id} />
+            <RealtimeNotifications accountId={account.id} />
+            
             {/* Header */}
             <header className="flex md:flex-row flex-col justify-between md:items-end gap-4">
                 <div>
                     <h1 className="font-bold text-3xl tracking-tight">
-                        Vítejte, {profile?.first_name}
+                        Vítejte, {profile?.first_name || 'Uživateli'}
                     </h1>
                     <p className="text-muted-foreground">
                         Přehled vašeho bankovního účtu
@@ -139,14 +149,14 @@ export default async function ClientDashboard() {
                         </CardContent>
                     </Card>
 
-                    <Card className="flex">
+                    <Card className="flex flex-col">
                         <CardHeader>
                             <CardTitle>Nová platba</CardTitle>
                             <CardDescription>
                                 Převeďte peníze na jiný účet
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="flex-1">
                             <PaymentForm
                                 senderAccountId={account.id}
                                 currentBalance={Number(account.balance)}
@@ -156,23 +166,21 @@ export default async function ClientDashboard() {
                 </div>
 
                 <div className="space-y-6 lg:col-span-2">
-                    
                     {/* SEKCE: Moje karty */}
                     <Card>
-                        <CardHeader className="flex flex-row justify-between items-center space-y-0">
+                        <CardHeader className="flex flex-row justify-between items-center space-y-0 pb-4">
                             <div>
                                 <CardTitle>Moje virtuální karty</CardTitle>
                                 <CardDescription>
                                     Spravujte karty pro platby na internetu
                                 </CardDescription>
                             </div>
-                            {/* Zde voláme tlačítko, které spustí generování z action.ts */}
                             <NewCardButton accountId={account.id} />
                         </CardHeader>
                         
                         <CardContent>
                             {cards.length === 0 ? (
-                                <div className="text-muted-foreground text-center">
+                                <div className="py-6 border-2 border-dashed rounded-lg text-muted-foreground text-center">
                                     Zatím nemáte žádnou aktivní kartu.
                                 </div>
                             ) : (
@@ -185,15 +193,15 @@ export default async function ClientDashboard() {
                         </CardContent>
                     </Card>
 
-                    {/* SEKCE: Historie transakcí (ta už tam je z minula, jen ji nechat v Card kontejneru) */}
-                    <Card className="h-full">
+                    {/* SEKCE: Historie transakcí */}
+                    <Card className="flex flex-col h-full">
                         <CardHeader>
                             <CardTitle>Nedávné transakce</CardTitle>
                             <CardDescription>
                                 Posledních 10 pohybů na vašem účtu
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="flex-1">
                             <HistoryTable 
                                 transactions={transactions || []}
                                 currentAccountId={account.id}

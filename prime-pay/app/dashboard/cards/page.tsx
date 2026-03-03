@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/server";
 
-import { CardDisplay } from "@/components/client/card-display"; // Zkontroluj cestu k tvé komponentě!
+import { CardDisplay } from "@/components/client/card-display";
 import { NewCardButton } from "@/components/client/new-card-button";
 import { 
     Card,  

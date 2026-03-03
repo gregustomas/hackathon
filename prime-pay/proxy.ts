@@ -21,15 +21,11 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-
   const { data: { user } } = await supabase.auth.getUser()
-
-  const { data: { session } } = await supabase.auth.getSession()
-  
   const path = request.nextUrl.pathname
 
-  const aalLevel = session?.user?.app_metadata?.aal
-  
+  const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+  const aalLevel = aalData?.currentLevel
 
   let hasMfaEnabled = false
   if (user) {
@@ -41,10 +37,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // if (user && hasMfaEnabled && aalLevel !== 'aal2' && path !== '/auth/mfa') {
-  //   return NextResponse.redirect(new URL('/auth/mfa', request.url))
-  // }
-
   if (user && path === '/auth/mfa') {
     if (!hasMfaEnabled || aalLevel === 'aal2') {
         return NextResponse.redirect(new URL('/dashboard', request.url))
@@ -55,7 +47,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-
   if (user && path.startsWith('/dashboard') && (!hasMfaEnabled || aalLevel === 'aal2')) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -63,9 +54,8 @@ export async function proxy(request: NextRequest) {
       .eq('id', user.id)
       .single()
       
-    const role = profile?.role || 'CLIENT' 
+    const role = profile?.role || 'CLIENT'
 
-    // Ochrana pod-sekcí
     if (path.startsWith('/dashboard/admin') && role !== 'ADMIN') {
       return NextResponse.redirect(new URL('/dashboard/client', request.url))
     }
@@ -86,7 +76,6 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard/admin', request.url))
     }
 
-    // OCHRANA PROTI NEKONEČNÉ SMYČCE
     if (path === '/dashboard' || path === '/dashboard/') {
       if (role === 'ADMIN') return NextResponse.redirect(new URL('/dashboard/admin', request.url))
       if (role === 'BANKER') return NextResponse.redirect(new URL('/dashboard/banker', request.url))
