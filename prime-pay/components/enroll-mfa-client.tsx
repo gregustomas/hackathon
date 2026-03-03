@@ -93,7 +93,7 @@ export function EnrollMfaClient() {
             </CardHeader>
             <CardContent>
                 {isEnrolled ? (
-                    <div className="bg-green-50/10 p-4 border border-green-200 rounded-md font-medium text-green-600">
+                    <div className="bg-green-50/10 p-4 border border-green-400 rounded-md font-medium text-green-600">
                         Vaše dvoufázové ověření je aktuálně aktivní. Vaše
                         prostředky jsou v bezpečí.
                     </div>

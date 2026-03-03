@@ -9,66 +9,59 @@ export type ActionState = {
 }
 
 export async function login(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  console.log("--> ZAČÁTEK LOGIN AKCE")
   const supabase = await createClient()
 
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
-  // 1. Zkusíme přihlásit uživatele přes Supabase Auth
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
-    console.error("❌ Chyba přihlášení:", error.message)
     return { error: 'Špatný email nebo heslo.' }
   }
 
-  console.log("✅ Uživatel ověřen. Kontroluji MFA...")
-
-  // 2. KONTROLA MFA (Dvoufázové ověření)
+  // KONTROLA MFA (Dvoufázové ověření)
   const { data: factors, error: mfaError } = await supabase.auth.mfa.listFactors()
   
-  // Pokud listFactors selže nebo má uživatel MFA nastavené
   if (!mfaError && factors && factors.totp && factors.totp.length > 0) {
-    console.log("⚠️ Uživatel má MFA. Přesměrovávám na ověření kódu.")
     redirect('/auth/mfa')
   }
 
-  // 3. Přihlášení bylo úspěšné a MFA není vyžadováno
-  console.log("✅ Přihlášení úspěšné, jdeme na dashboard.")
   revalidatePath('/', 'layout')
   redirect('/dashboard')
 }
 
 export async function signup(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  console.log("--> ZAČÁTEK SIGNUP AKCE") 
-  
-  // 1. Obyčejný klient pro přihlášení (uloží cookies do prohlížeče)
   const supabase = await createClient()
-  // 2. Admin klient s plnými právy k zápisu do databáze (ignoruje RLS)
   const supabaseAdmin = await createAdminClient()
 
+  // Sběr rozšířených dat
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+  const confirmPassword = formData.get('confirmPassword') as string
   const firstName = formData.get('firstName') as string
   const lastName = formData.get('lastName') as string
+  const phone = formData.get('phone') as string
 
-  // Krok 1: Vytvoření v Auth (přes normálního klienta)
-  console.log("Krok 1: Volám supabase.auth.signUp...")
+  if (password !== confirmPassword) {
+    return { error: 'Hesla se neshodují.' }
+  }
+  
+  if (password.length < 8) {
+     return { error: 'Heslo musí mít alespoň 8 znaků.' }
+  }
+
+  // 1. Vytvoření uživatele
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
   })
 
   if (authError || !authData.user) {
-    return { error: authError?.message || 'Registrace selhala.' }
+    return { error: authError?.message || 'Registrace selhala. Zkontrolujte údaje.' }
   }
 
-  // Krok 2: Zápis do profiles (PŘES ADMIN KLIENTA!)
-  console.log("Krok 2: Zapisuji do tabulky profiles (jako Admin)...")
+  // 2. Vytvoření rozšířeného profilu (nyní i s telefonem)
   const { error: profileError } = await supabaseAdmin
     .from('profiles')
     .insert([{
@@ -76,16 +69,15 @@ export async function signup(prevState: ActionState, formData: FormData): Promis
       first_name: firstName,
       last_name: lastName,
       email: email,
+      phone: phone || null, // Volitelné, ale doporučené
       role: 'CLIENT'
     }])
 
   if (profileError) {
-    console.error("❌ Chyba:", profileError)
     return { error: `Nelze vytvořit profil: ${profileError.message}` } 
   }
 
-  // Krok 3: Vytvoření účtu (PŘES ADMIN KLIENTA!)
-  console.log("Krok 3: Vytvářím bankovní účet...")
+  // 3. Založení bankovního účtu s bonusem
   const accountNumber = Math.floor(1000000000 + Math.random() * 9000000000).toString()
   
   const { error: accountError } = await supabaseAdmin
@@ -97,12 +89,9 @@ export async function signup(prevState: ActionState, formData: FormData): Promis
     }])
 
   if (accountError) {
-    console.error("❌ Chyba:", accountError)
     return { error: `Nelze vytvořit bankovní účet: ${accountError.message}` }
   }
 
-  console.log("✅ Vše úspěšně vytvořeno!")
-  
   revalidatePath('/', 'layout')
   redirect('/dashboard')
 }
