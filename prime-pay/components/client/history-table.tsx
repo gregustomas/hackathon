@@ -69,7 +69,7 @@ export function HistoryTable({
                             : tx.sender?.account_number;
 
                         return (
-                            <TableRow key={tx.id}>
+                            <TableRow key={tx.id} suppressHydrationWarning>
                                 <TableCell>
                                     {isOutgoing ? (
                                         <span className="flex items-center bg-red-500/10 px-2 py-1 rounded-md w-fit font-medium text-red-500 text-xs">
