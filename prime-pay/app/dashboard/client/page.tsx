@@ -20,6 +20,8 @@ import { NewCardButton } from "@/components/client/new-card-button";
 import { SupabaseCardRow } from "../cards/page";
 import { LoanRequestForm } from "@/components/client/loan-request-form";
 import { TransactionsCharts } from "@/components/client/transaction-charts";
+import { MarketReviewCZCard } from "@/components/client/market-review-cz";
+import { getFrankfurterMarkets } from "@/lib/markets/frankfurter";
 
 export default async function ClientDashboard() {
   const cookieStore = await cookies();
@@ -46,29 +48,36 @@ export default async function ClientDashboard() {
   // 2. Vytvoření Admin klienta pro všechny databázové dotazy (obejití RLS)
   const supabaseAdmin = await createAdminClient();
 
-  // 3. Získání profilu s bezpečnými limity
-  const { data: profile, error: profileError } = await supabaseAdmin
+  // 3. Načítáme nezávislé věci paralelně (profil, účet, market data).
+  const profilePromise = supabaseAdmin
     .from("profiles")
     .select("first_name, last_name")
     .eq("id", user.id)
     .limit(1)
     .maybeSingle();
 
-  if (profileError) {
-    console.error("CHYBA NAČÍTÁNÍ PROFILU:", profileError.message);
-  }
-
-  // 4. Získání účtu s bezpečnými limity
-  const { data: account, error: accountError } = await supabaseAdmin
+  const accountPromise = supabaseAdmin
     .from("accounts")
     .select("id, account_number, balance")
     .eq("profile_id", user.id)
     .limit(1)
     .maybeSingle();
 
-  if (accountError) {
-    console.error("CHYBA NAČÍTÁNÍ ÚČTU:", accountError.message);
-  }
+  const marketsPromise = (async () => {
+    try {
+      // Nechceme, aby externí API blokovalo celý dashboard.
+      const signal = AbortSignal.timeout(1500);
+      return await getFrankfurterMarkets({ days: 30, signal });
+    } catch {
+      return null;
+    }
+  })();
+
+  const [{ data: profile, error: profileError }, { data: account, error: accountError }, markets] =
+    await Promise.all([profilePromise, accountPromise, marketsPromise]);
+
+  if (profileError) console.error("CHYBA NAČÍTÁNÍ PROFILU:", profileError.message);
+  if (accountError) console.error("CHYBA NAČÍTÁNÍ ÚČTU:", accountError.message);
 
   // Pokud uživatel nemá účet, ukončíme renderování zde
   if (!account) {
@@ -79,8 +88,8 @@ export default async function ClientDashboard() {
     );
   }
 
-  // 5. Získání transakcí (účet už zaručeně existuje)
-  const { data: rawTransactions } = await supabaseAdmin
+  // 5. Získání transakcí + karet paralelně (účet už zaručeně existuje)
+  const transactionsPromise = supabaseAdmin
     .from("transactions")
     .select(
       `
@@ -93,17 +102,19 @@ export default async function ClientDashboard() {
     .order("created_at", { ascending: false })
     .limit(10);
 
-  const transactions = rawTransactions as unknown as Transaction[];
-
-  // 6. Získání karet
-  const { data: dbCards, error: cardsError } = await supabaseAdmin
+  const cardsPromise = supabaseAdmin
     .from("cards")
-    .select("*")
+    .select(
+      "id, account_id, card_number, expiry_date, cvv, is_active, daily_limit, atm_limit, created_at",
+    )
     .eq("account_id", account.id)
     .order("created_at", { ascending: false });
-  if (cardsError) {
-    console.error("Chyba při stahování karet:", cardsError.message);
-  }
+
+  const [{ data: rawTransactions }, { data: dbCards, error: cardsError }] =
+    await Promise.all([transactionsPromise, cardsPromise]);
+
+  const transactions = rawTransactions as unknown as Transaction[];
+  if (cardsError) console.error("Chyba při stahování karet:", cardsError.message);
 
   const cards: SupabaseCardRow[] = (dbCards || []).map((card) => ({
     id: card.id,
@@ -181,6 +192,8 @@ export default async function ClientDashboard() {
               />
             </CardContent>
           </Card>
+
+          <MarketReviewCZCard initialData={markets ?? undefined} />
         </div>
 
         <div className="space-y-6 lg:col-span-2">
