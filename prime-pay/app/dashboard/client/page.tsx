@@ -224,6 +224,7 @@ export default async function ClientDashboard() {
                             <HistoryTable 
                                 transactions={transactions || []}
                                 currentAccountId={account.id}
+                                accountNumber={account.account_number}
                             />
                         </CardContent>
                     </Card>
