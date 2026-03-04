@@ -90,7 +90,9 @@ export default async function CardsPage({ searchParams }: { searchParams: Promis
         expiry_date: card.expiry_date,
         cvv: card.cvv,
         is_active: card.is_active,
-        daily_limit: card.daily_limit
+        daily_limit: card.daily_limit,
+        accountId: card.account_id,
+
     }));
 
     return (
@@ -121,7 +123,8 @@ export default async function CardsPage({ searchParams }: { searchParams: Promis
                 <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                     {cards.map((card) => (
                         <div key={card.id} className="flex flex-col gap-4">
-                            <CardDisplay card={card} />
+                            <CardDisplay card={card} profileId={user.id}
+      accountId={card.accountId} />
                             
                             {/* Doprovodné informace pod kartou (volitelné) */}
                             <div className="flex justify-between px-2 text-muted-foreground text-sm">
