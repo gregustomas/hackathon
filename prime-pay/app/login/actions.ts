@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createVirtualCardForAccount } from '@/lib/cards/create-virtual-card'
 
 export type ActionState = {
   error: string | null
@@ -76,7 +77,7 @@ export async function signup(prevState: ActionState, formData: FormData): Promis
     return { error: authError?.message || 'Registrace selhala. Zkontrolujte údaje.' }
   }
 
-  // 2. Vytvoření rozšířeného profilu (nyní i s telefonem)
+  // 2. Vytvoření rozšířeného profilu 
   const { error: profileError } = await supabaseAdmin
     .from('profiles')
     .insert([{
@@ -85,9 +86,9 @@ export async function signup(prevState: ActionState, formData: FormData): Promis
       last_name: formData.get('lastName'),
       email: formData.get('email'),
       phone: formData.get('phone'),
-      street: formData.get('street'),   // Nové
-      city: formData.get('city'),       // Nové
-      zip_code: formData.get('zipCode'), // Nové
+      street: formData.get('street'),   
+      city: formData.get('city'),       
+      zip_code: formData.get('zipCode'), 
       role: 'CLIENT'
     }])
 
@@ -97,22 +98,37 @@ export async function signup(prevState: ActionState, formData: FormData): Promis
 
   // 3. Založení bankovního účtu s bonusem
   const BANK_CODE = '8888' 
-  
-  // Bezpečnější vygenerování 10místného čísla vyplněného nulami (např. 0012345678)
   const randomCore = Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')
   const accountNumber = `${randomCore}/${BANK_CODE}`
+  const initialDailyLimit = 5000; // Můžeme definovat defaultní limit
   
-  const { error: accountError } = await supabaseAdmin
+  // ZMĚNA ZDE: Přidáno .select('id') a .single() pro získání ID účtu
+  const { data: newAccount, error: accountError } = await supabaseAdmin
     .from('accounts')
     .insert([{
       profile_id: authData.user.id,
       account_number: accountNumber,
-      balance: 1000.00
+      balance: 1000.00,
+      daily_limit: initialDailyLimit,
+      is_active: true
     }])
+    .select('id')
+    .single();
 
+  if (accountError || !newAccount) {
+    return { error: `Nelze vytvořit bankovní účet: ${accountError?.message}` }
+  }
 
-  if (accountError) {
-    return { error: `Nelze vytvořit bankovní účet: ${accountError.message}` }
+  // 4. VYTVOŘENÍ VIRTUÁLNÍ KARTY
+  try {
+      await createVirtualCardForAccount({
+          supabaseAdmin,
+          accountId: newAccount.id,
+          dailyLimit: initialDailyLimit
+      });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (cardError: any) {
+      return { error: `Nelze vytvořit kartu: ${cardError.message}` }
   }
 
   revalidatePath('/', 'layout')
