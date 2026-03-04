@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { EnrollMfaClient } from "@/components/settings/enroll-mfa-client";
 import { SelfMfaResetButton } from "@/components/settings/self-mfa-reset-button";
 import {
@@ -14,14 +15,16 @@ import { Button } from "@/components/ui/button";
 import { CardLimitForm } from "@/components/client/card-limit-form";
 import { SupabaseCardRow } from "../cards/page";
 import { createAdminClient } from "@/lib/supabase/server";
-import { Check } from "lucide-react";
+import { Check, UserCog, ArrowLeft } from "lucide-react";
 
 interface ChildAccount {
-    id: string;
-    account_number: string;
-    profiles: {
-        first_name: string;
-    } | null;
+  id: string;
+  account_number: string;
+  profiles: {
+    first_name: string;
+  } | null;
+  is_child_account: boolean;
+  parent_account_id: string | null;
 }
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
@@ -58,61 +61,75 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
     // 2.5 Kontrola MFA
     const { data: mfaList } = await supabase.auth.mfa.listFactors();
-    const hasMfaEnabled = !!(mfaList?.totp && mfaList.totp.length > 0);
+    // Bezpečnější kontrola pole totp
+    const hasMfaEnabled = !!(mfaList?.totp && Array.isArray(mfaList.totp) && mfaList.totp.length > 0);
 
-    // 3. Získání účtu
-    const { data: accounts } = await supabaseAdmin
+    // 3. Získání vlastních účtů
+    const { data: ownAccounts } = await supabaseAdmin
         .from("accounts")
         .select("id, account_number, is_child_account, parent_account_id")
         .eq("profile_id", user.id)
         .order("created_at", { ascending: true });
         
-    let account = accounts && accounts.length > 0 ? accounts[0] : null;
-    if (selectedAccountId && accounts) {
-        const found = accounts.find(a => a.id === selectedAccountId);
-        if (found) account = found;
-    }
+    const primaryAccount = ownAccounts && ownAccounts.length > 0 ? ownAccounts[0] : null;
 
     // 4. Pokud je to rodič, zjistíme, jestli má děti
     let childrenAccounts: ChildAccount[] = [];
-    if (profile?.role === "CLIENT" && account) {
+    if (profile?.role === "CLIENT" && primaryAccount) {
         const { data } = await supabaseAdmin
             .from("accounts")
             .select("id, account_number, profiles(first_name)")
-            .eq("parent_account_id", account.id);
+            .eq("parent_account_id", primaryAccount.id);
 
         childrenAccounts = (data as unknown as ChildAccount[]) || [];
     }
 
-    // 5. Pokud je to dítě, zjistíme jméno rodiče
+    // 5. Zjištění, JAKÝ účet zrovna spravujeme (umožňuje rodiči sledovat dítě)
+    let targetAccount = primaryAccount;
+    let isManagingChild = false;
+
+    if (selectedAccountId) {
+        const foundOwn = ownAccounts?.find(a => a.id === selectedAccountId);
+        const foundChild = childrenAccounts.find(a => a.id === selectedAccountId);
+        
+        if (foundOwn) {
+            targetAccount = foundOwn;
+        } else if (foundChild) {
+            targetAccount = foundChild as ChildAccount;
+            isManagingChild = true;
+        }
+    }
+
+    // 6. Pokud je to dítě, zjistíme jméno rodiče
     let parentName = null;
-    if (profile?.role === "CHILD" && account?.parent_account_id) {
+    if (profile?.role === "CHILD" && primaryAccount?.parent_account_id) {
         const { data: parentAcc } = await supabaseAdmin
             .from("accounts")
             .select("profiles(first_name)")
-            .eq("id", account.parent_account_id)
+            .eq("id", primaryAccount.parent_account_id)
             .limit(1)
             .maybeSingle();
 
-        const typedParent = parentAcc as unknown as {
-            profiles: { first_name: string };
-        };
+        const typedParent = parentAcc as unknown as { profiles: { first_name: string } };
         parentName = typedParent?.profiles?.first_name;
     }
 
-    // 6. ZÍSKÁNÍ AKTIVNÍCH KARET PRO NASTAVENÍ LIMITŮ
+    // 7. ZÍSKÁNÍ AKTIVNÍCH KARET PRO NASTAVENÍ LIMITŮ (z cílového účtu)
     let activeCards: SupabaseCardRow[] = [];
-    if (account) {
+    if (targetAccount) {
         const { data: cardsData } = await supabaseAdmin
             .from("cards")
             .select("*")
-            .eq("account_id", account.id)
+            .eq("account_id", targetAccount.id)
             .eq("is_active", true) 
             .order("created_at", { ascending: false })
             .returns<SupabaseCardRow[]>();
             
         activeCards = cardsData || [];
     }
+
+    // Zobrazení klientských funkcí jen pro klienty a děti
+    const isClientOrChild = profile?.role === "CLIENT" || profile?.role === "CHILD";
 
     return (
         <div className="space-y-6 py-8 cs-container">
@@ -127,21 +144,21 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                 <Card>
                     <CardHeader>
                         <CardTitle>Zabezpečení (2FA)</CardTitle>
-                        <CardDescription>
-                            Chraňte svůj účet pomocí Authenticator aplikace.
-                        </CardDescription>
+                        <CardDescription>Chraňte svůj účet pomocí Authenticator aplikace.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {!hasMfaEnabled ? (
                             <EnrollMfaClient />
                         ) : (
                             <div className="bg-green-400/10 p-4 border border-green-400 rounded-md text-green-400">
-                                <p className="inline-flex items-center font-medium text-sm"><Check className="mr-2 size-4" /> 2FA je aktivní a váš účet je chráněn.</p>
+                                <p className="inline-flex items-center font-medium text-sm">
+                                    <Check className="mr-2 size-4" /> 2FA je aktivní a váš účet je chráněn.
+                                </p>
                             </div>
                         )}
 
                         {/* Odstranění 2FA - Viditelné jen pro bankéře/adminy */}
-                        {hasMfaEnabled && (profile?.role === "BANKER" || profile?.role === "ADMIN") && (
+                        {hasMfaEnabled && !isClientOrChild && (
                             <div className="mt-4 pt-4 border-t">
                                 <p className="mb-3 text-muted-foreground text-sm">
                                     Jako zaměstnanec banky máte možnost své dvoufázové ověření dočasně deaktivovat (např. při změně telefonu).
@@ -151,9 +168,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                         )}
                         
                         {/* Hláška pro klienta/dítě */}
-                        {hasMfaEnabled && (profile?.role === "CLIENT" || profile?.role === "CHILD") && (
+                        {hasMfaEnabled && isClientOrChild && (
                             <div className="mt-4 pt-4 border-t text-muted-foreground text-xs">
-                                Z bezpečnostních důvodů (ochrana majetku) nemůžete 2FA sami deaktivovat. Pokud jste ztratili telefon, kontaktujte svého bankéře.
+                                Z bezpečnostních důvodů nemůžete 2FA sami deaktivovat. Pokud jste ztratili telefon, kontaktujte svého bankéře.
                             </div>
                         )}
                     </CardContent>
@@ -163,27 +180,38 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                 <Card>
                     <CardHeader>
                         <CardTitle>Správa rolí a rodiny</CardTitle>
-                        <CardDescription>
-                            Vaše aktuální role: <strong className="text-primary">{profile?.role}</strong>
-                        </CardDescription>
+                        <CardDescription>Vaše aktuální role: <strong className="text-primary">{profile?.role}</strong></CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {/* Pohled Rodiče (Klienta) */}
                         {profile?.role === "CLIENT" && (
-                            <div>
-                                <h3 className="mb-2 font-medium">Dětské účty pod vaším dohledem:</h3>
-                                {childrenAccounts.length === 0 ? (
-                                    <p className="mb-4 text-muted-foreground text-sm">Zatím nemáte propojené žádné dětské účty.</p>
-                                ) : (
-                                    <ul className="space-y-2 mb-4">
-                                        {childrenAccounts.map((child: ChildAccount) => (
-                                            <li key={child.id} className="bg-muted p-2 rounded text-sm">
-                                                {child.profiles?.first_name} (Účet: {child.account_number})
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                                <Button variant="outline" className="w-full">Vytvořit dětský účet</Button>
+                            <div className="space-y-4">
+                                <div>
+                                    <h3 className="mb-3 font-medium text-sm">Dětské účty pod vaším dohledem:</h3>
+                                    {childrenAccounts.length === 0 ? (
+                                        <p className="mb-4 text-muted-foreground text-sm">Zatím nemáte propojené žádné dětské účty.</p>
+                                    ) : (
+                                        <ul className="space-y-3 mb-4">
+                                            {childrenAccounts.map((child: ChildAccount) => (
+                                                <li key={child.id} className="flex justify-between items-center bg-muted p-3 rounded-md text-sm">
+                                                    <div>
+                                                        <p className="font-medium">{child.profiles?.first_name}</p>
+                                                        <p className="text-muted-foreground text-xs">Účet: {child.account_number}</p>
+                                                    </div>
+                                                    <Button variant="secondary" size="sm" asChild>
+                                                        <Link href={`?account=${child.id}`}>
+                                                            <UserCog className="mr-2 size-4" />
+                                                            Spravovat
+                                                        </Link>
+                                                    </Button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                                <Button variant="outline" className="w-full" asChild>
+                                    <Link href="/dashboard/settings/create-child">Vytvořit dětský účet</Link>
+                                </Button>
                             </div>
                         )}
 
@@ -197,44 +225,62 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                         )}
 
                         {/* Pohled Bankéře / Admina */}
-                        {(profile?.role === "BANKER" || profile?.role === "ADMIN") && (
+                        {!isClientOrChild && (
                             <div className="bg-muted p-4 rounded-md">
                                 <p className="text-sm">
-                                    Máte speciální systémová oprávnění. Pro správu klientů přejděte na váš hlavní Dashboard.
+                                    Máte speciální systémová oprávnění. Pro správu klientů přejděte na Dashboard.
                                 </p>
                             </div>
                         )}
                     </CardContent>
                 </Card>
 
-                {/* 3. Modul pro nastavení limitů karet */}
-                <Card className="md:col-span-2">
-                    <CardHeader>
-                        <CardTitle>Limity platebních karet</CardTitle>
-                        <CardDescription>
-                            Nastavte si denní limity pro platby na internetu a v obchodech pro vaše aktivní karty.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {activeCards.length === 0 ? (
-                            <div className="py-8 border-2 border-dashed rounded-lg text-muted-foreground text-sm text-center">
-                                Nemáte žádné aktivní karty pro nastavení limitů.
-                            </div>
-                        ) : (
-                            <div className="gap-4 grid grid-cols-1 lg:grid-cols-2">
-                                {activeCards.map((card) => (
-                                    <CardLimitForm 
-                                        key={card.id}
-                                        cardId={card.id}
-                                        cardNumber={card.card_number}
-                                        currentPaymentLimit={card.daily_limit}
-                                        currentAtmLimit={card.atm_limit || 0}
-                                    />
-                                ))}
+                {/* 3. Modul pro nastavení limitů karet (SKRYTO PRO BANKÉŘE A ADMINY) */}
+                {isClientOrChild && (
+                    <Card className="relative md:col-span-2 border-primary/20">
+                        {isManagingChild && (
+                            <div className="top-0 right-0 absolute bg-primary px-3 py-1 rounded-tr-lg rounded-bl-lg font-medium text-primary-foreground text-xs">
+                                Režim správy dítěte
                             </div>
                         )}
-                    </CardContent>
-                </Card>
+                        <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle>Limity platebních karet</CardTitle>
+                                    <CardDescription>
+                                        Nastavení pro účet: <strong className="text-foreground">{targetAccount?.account_number}</strong>
+                                    </CardDescription>
+                                </div>
+                                {isManagingChild && (
+                                    <Button variant="ghost" size="sm" asChild>
+                                        <Link href="/dashboard/settings">
+                                            <ArrowLeft className="mr-2 size-4" /> Zpět na můj účet
+                                        </Link>
+                                    </Button>
+                                )}
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {activeCards.length === 0 ? (
+                                <div className="py-8 border-2 border-dashed rounded-lg text-muted-foreground text-sm text-center">
+                                    K tomuto účtu nejsou vedeny žádné aktivní karty.
+                                </div>
+                            ) : (
+                                <div className="gap-4 grid grid-cols-1 lg:grid-cols-2">
+                                    {activeCards.map((card) => (
+                                        <CardLimitForm 
+                                            key={card.id}
+                                            cardId={card.id}
+                                            cardNumber={card.card_number}
+                                            currentPaymentLimit={card.daily_limit}
+                                            currentAtmLimit={card.atm_limit || 0}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </div>
     );
