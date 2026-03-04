@@ -15,7 +15,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { CardDisplay } from "@/components/client/card-display";
 import { SupabaseCardRow } from "../cards/page";
 import { TransactionsCharts } from "@/components/client/transaction-charts";
-import { ShieldAlert, UserCheck, Clock } from "lucide-react";
+import { ShieldAlert, UserCheck, Clock, User } from "lucide-react";
 
 interface ChildProfile {
     first_name: string;
@@ -307,7 +307,7 @@ export default async function ChildDashboard() {
                             ) : (
                                 <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
                                     {cards.map((card) => (
-                                        <CardDisplay key={card.id} card={card} />
+                                        <CardDisplay key={card.id} card={card} accountId={account.id} profileId={user.id} />
                                     ))}
                                 </div>
                             )}
