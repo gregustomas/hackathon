@@ -92,7 +92,13 @@ export async function createChildAccountAction(formData: FormData) {
 
     // 6. VYTVOŘENÍ ÚČTU DÍTĚTE (tabulka accounts) s napojením na rodiče
     // Generování čísla účtu (pro reálnou aplikaci by mělo být unikátní)
-     const accNumber = "20" + Math.floor(10000000 + Math.random() * 90000000).toString();
+    const BANK_CODE = "8888";
+
+    const accNumberCore = Math.floor(
+      10000000 + Math.random() * 90000000
+    ).toString(); // 8 číslic za prefixem 20
+
+    const accNumber = `20${accNumberCore}/${BANK_CODE}`;
 
     const { data: newChildAccount, error: accountError } = await supabaseAdmin.from("accounts").insert({
         profile_id: newChildAuth.user.id,

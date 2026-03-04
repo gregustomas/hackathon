@@ -8,13 +8,20 @@ const WARNING_BEFORE_MS = 30 * 1000;         // varování 30 s před odhlášen
 type UseInactivityLogoutResult = {
   showWarning: boolean;
   secondsLeft: number;
+  minutesLeft: number;
+  secondsRemainder: number;
   stayLoggedIn: () => void;
   performLogout: () => void;
 };
 
 export const useInactivityLogout = (onLogout: () => void): UseInactivityLogoutResult => {
   const [showWarning, setShowWarning] = useState<boolean>(false);
-  const [secondsLeft, setSecondsLeft] = useState<number>(Math.floor(WARNING_BEFORE_MS / 1000));
+  const [secondsLeft, setSecondsLeft] = useState<number>(
+    Math.floor(WARNING_BEFORE_MS / 1000),
+  );
+
+  const minutesLeft = Math.floor(secondsLeft / 60);
+  const secondsRemainder = secondsLeft % 60;
 
   const logoutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const warningTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,7 +66,10 @@ export const useInactivityLogout = (onLogout: () => void): UseInactivityLogoutRe
     if (logoutTimer.current) clearTimeout(logoutTimer.current);
     if (warningTimer.current) clearTimeout(warningTimer.current);
 
-    warningTimer.current = setTimeout(startCountdown, INACTIVITY_TIMEOUT_MS - WARNING_BEFORE_MS);
+    warningTimer.current = setTimeout(
+      startCountdown,
+      INACTIVITY_TIMEOUT_MS - WARNING_BEFORE_MS,
+    );
     logoutTimer.current = setTimeout(performLogout, INACTIVITY_TIMEOUT_MS);
   }, [performLogout, startCountdown]);
 
@@ -75,12 +85,13 @@ export const useInactivityLogout = (onLogout: () => void): UseInactivityLogoutRe
 
     const handler = () => resetTimers();
 
-    // místo přímého resetTimers → spustíme ho asynchronně
     const initialTimeout = setTimeout(() => {
       resetTimers();
     }, 0);
 
-    events.forEach((event) => window.addEventListener(event, handler, { passive: true }));
+    events.forEach((event) =>
+      window.addEventListener(event, handler, { passive: true }),
+    );
 
     return () => {
       clearTimeout(initialTimeout);
@@ -93,5 +104,12 @@ export const useInactivityLogout = (onLogout: () => void): UseInactivityLogoutRe
     resetTimers();
   };
 
-  return { showWarning, secondsLeft, stayLoggedIn, performLogout };
+  return {
+    showWarning,
+    secondsLeft,
+    minutesLeft,
+    secondsRemainder,
+    stayLoggedIn,
+    performLogout,
+  };
 };

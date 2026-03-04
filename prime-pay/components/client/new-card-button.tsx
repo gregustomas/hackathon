@@ -25,14 +25,14 @@ export function NewCardButton({ accountId }: { accountId: string }) {
         <Button 
             onClick={handleGenerate} 
             disabled={isPending}
-            className="w-full sm:w-auto"
+            className="w-auto"
         >
             {isPending ? (
-                <Loader2 className="mr-2 size-4 animate-spin" />
+                <Loader2 className="md:mr-2 size-4 animate-spin" />
             ) : (
-                <PlusCircle className="mr-2 size-4" />
+                <PlusCircle className="md:mr-2 size-4" />
             )}
-            Vytvořit novou kartu
+            <span className="hidden md:inline-block">Vytvořit novou kartu</span>
         </Button>
     );
 }
