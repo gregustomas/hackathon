@@ -40,3 +40,22 @@ export interface PendingLoan {
   profiles: LoanProfile | null;
   accounts: LoanAccount | null;
 }
+
+export interface CardUnblockRequestProfile {
+  first_name: string;
+  last_name: string;
+}
+
+export interface CardUnblockRequestCard {
+  id: string;
+  card_number: string;
+}
+
+export interface CardUnblockRequest {
+  id: string;
+  status: string;
+  created_at: string;
+  profiles: CardUnblockRequestProfile | null;
+  accounts: LoanAccount | null;
+  cards: CardUnblockRequestCard | null;
+}

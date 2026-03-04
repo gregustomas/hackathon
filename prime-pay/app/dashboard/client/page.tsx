@@ -21,13 +21,12 @@ import { MarketReviewCZCard } from "@/components/client/market-review-cz";
 import { getFrankfurterMarkets } from "@/lib/markets/frankfurter";
 import { ParentApprovalCard } from "@/components/client/parent-approval-card";
 import {
-    Profile,
-    Account,
-    Transaction,
-    PendingChildTransaction,
-    ChildAccountWithProfile,
+  Profile,
+  Account,
+  Transaction,
+  PendingChildTransaction,
+  ChildAccountWithProfile,
 } from "@/types/dashboard";
-
 
 export default async function ClientDashboard() {
   const cookieStore = await cookies();
@@ -35,10 +34,18 @@ export default async function ClientDashboard() {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll() { return cookieStore.getAll(); } } },
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+      },
+    },
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   const supabaseAdmin = await createAdminClient();
@@ -72,7 +79,8 @@ export default async function ClientDashboard() {
     markets,
   ] = await Promise.all([profilePromise, accountPromise, marketsPromise]);
 
-  if (profileError) console.error("CHYBA NAČÍTÁNÍ PROFILU:", profileError.message);
+  if (profileError)
+    console.error("CHYBA NAČÍTÁNÍ PROFILU:", profileError.message);
   if (accountError) console.error("CHYBA NAČÍTÁNÍ ÚČTU:", accountError.message);
 
   const profile = profileData as Profile | null;
@@ -91,23 +99,28 @@ export default async function ClientDashboard() {
   // Paralelní dotazy na transakce a karty
   const transactionsPromise = supabaseAdmin
     .from("transactions")
-    .select(`
+    .select(
+      `
         id, amount, description, created_at, status, from_account_id, to_account_id,
         sender:from_account_id (account_number),
         receiver:to_account_id (account_number)
-    `)
+    `,
+    )
     .or(`from_account_id.eq.${account.id},to_account_id.eq.${account.id}`)
     .order("created_at", { ascending: false })
     .limit(10);
 
   const cardsPromise = supabaseAdmin
     .from("cards")
-    .select("id, account_id, card_number, expiry_date, cvv, is_active, daily_limit, atm_limit, created_at")
+    .select(
+      "id, account_id, card_number, expiry_date, cvv, is_active, daily_limit, atm_limit, created_at",
+    )
     .eq("account_id", account.id)
     .order("created_at", { ascending: false });
 
   // Dotaz pro rodiče: Čekající žádosti od dětí
   let pendingChildTransactions: PendingChildTransaction[] = [];
+  let childAccountIds: string[] = [];
   if (!isChild) {
     const { data: childAccounts } = await supabaseAdmin
       .from("accounts")
@@ -116,14 +129,16 @@ export default async function ClientDashboard() {
       .returns<ChildAccountWithProfile[]>();
 
     if (childAccounts && childAccounts.length > 0) {
-      const childAccountIds = childAccounts.map((acc) => acc.id);
+      childAccountIds = childAccounts.map((acc) => acc.id);
 
       const { data: pendingTx } = await supabaseAdmin
         .from("transactions")
-        .select(`
+        .select(
+          `
             id, amount, description, created_at, status, from_account_id, to_account_id,
             sender:from_account_id (account_number, profiles(first_name))
-        `)
+        `,
+        )
         .in("from_account_id", childAccountIds)
         .eq("status", "WAITING_FOR_APPROVAL")
         .order("created_at", { ascending: true })
@@ -133,18 +148,19 @@ export default async function ClientDashboard() {
     }
   }
 
-  const [
-    { data: rawTransactions },
-    { data: dbCards, error: cardsError },
-  ] = await Promise.all([transactionsPromise, cardsPromise]);
+  const [{ data: rawTransactions }, { data: dbCards, error: cardsError }] =
+    await Promise.all([transactionsPromise, cardsPromise]);
 
-  if (cardsError) console.error("Chyba při stahování karet:", cardsError.message);
+  if (cardsError)
+    console.error("Chyba při stahování karet:", cardsError.message);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const transactions: Transaction[] = (rawTransactions ?? []).map((transaction: any) => ({
-  ...transaction,
-  sender: transaction.sender.length === 1 ? transaction.sender[0] : null,
-}));
+  const transactions: Transaction[] = (rawTransactions ?? []).map(
+    (transaction: any) => ({
+      ...transaction,
+      sender: transaction.sender.length === 1 ? transaction.sender[0] : null,
+    }),
+  );
 
   const cards: SupabaseCardRow[] = (dbCards ?? []).map((card) => ({
     id: card.id,
@@ -160,14 +176,14 @@ export default async function ClientDashboard() {
 
   return (
     <div className="space-y-8 py-8 cs-container">
-      <RealtimeNotifications accountId={account.id} />
-
       <header className="flex md:flex-row flex-col justify-between md:items-end gap-4">
         <div>
           <h1 className="font-bold text-3xl tracking-tight">
             Vítejte, {profile?.first_name ?? "Uživateli"}
           </h1>
-          <p className="text-muted-foreground">Přehled vašeho bankovního účtu</p>
+          <p className="text-muted-foreground">
+            Přehled vašeho bankovního účtu
+          </p>
         </div>
       </header>
 
@@ -192,11 +208,12 @@ export default async function ClientDashboard() {
       <div className="gap-6 grid grid-cols-1 lg:grid-cols-3">
         {/* Levý sloupec */}
         <div className="space-y-6 lg:col-span-1">
-
           {/* Karta se zůstatkem */}
           <Card className="bg-primary shadow-lg border-0 text-primary-foreground">
             <CardHeader className="pb-2">
-              <CardDescription className="text-primary-foreground/80">Aktuální zůstatek</CardDescription>
+              <CardDescription className="text-primary-foreground/80">
+                Aktuální zůstatek
+              </CardDescription>
               <CardTitle className="text-4xl">
                 {Number(account.balance).toLocaleString("cs-CZ")} CZK
               </CardTitle>
@@ -209,7 +226,8 @@ export default async function ClientDashboard() {
               {/* Pro dítě zobrazíme jeho limit */}
               {isChild && (
                 <p className="mt-2 text-primary-foreground/60 text-xs">
-                  Denní limit plateb: {Number(account.daily_limit).toLocaleString("cs-CZ")} CZK
+                  Denní limit plateb:{" "}
+                  {Number(account.daily_limit).toLocaleString("cs-CZ")} CZK
                 </p>
               )}
             </CardContent>
@@ -238,7 +256,9 @@ export default async function ClientDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Žádost o půjčku</CardTitle>
-                <CardDescription>Rychlé financování online do pár minut.</CardDescription>
+                <CardDescription>
+                  Rychlé financování online do pár minut.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <LoanRequestForm
@@ -251,12 +271,13 @@ export default async function ClientDashboard() {
           )}
 
           {/* Market data – skryto pro dítě (zbytečná komplexita) */}
-          {!isChild && <MarketReviewCZCard initialData={markets ?? undefined} />}
+          {!isChild && (
+            <MarketReviewCZCard initialData={markets ?? undefined} />
+          )}
         </div>
 
         {/* Pravý sloupec */}
         <div className="space-y-6 lg:col-span-2">
-
           {/* Sekce karet */}
           <Card>
             <CardHeader className="flex flex-row justify-between items-center space-y-0 pb-4">
@@ -279,19 +300,28 @@ export default async function ClientDashboard() {
               ) : (
                 <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
                   {cards.map((card) => (
-                    <CardDisplay key={card.id} card={card} />
+                    <CardDisplay
+                      key={card.id}
+                      card={card}
+                      profileId={user.id}
+                      accountId={account.id}
+                    />
                   ))}
                 </div>
               )}
               {isChild && (
                 <p className="mt-4 text-muted-foreground text-xs">
-                  Pro změnu limitů nebo vydání nové karty požádej svého rodiče v nastavení.
+                  Pro změnu limitů nebo vydání nové karty požádej svého rodiče v
+                  nastavení.
                 </p>
               )}
             </CardContent>
           </Card>
 
-          <TransactionsCharts transactions={transactions} currentAccountId={account.id} />
+          <TransactionsCharts
+            transactions={transactions}
+            currentAccountId={account.id}
+          />
 
           <div className="h-fit">
             <HistoryTable
