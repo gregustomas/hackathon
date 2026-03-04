@@ -50,3 +50,7 @@ export interface ChildAccountWithProfile {
         first_name: string;
     } | null;
 }
+
+export interface Session {
+    session_id: string;
+}

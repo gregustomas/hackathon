@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { LogOut, Settings, LayoutDashboard, Wallet, Check } from 'lucide-react'
+import { LogOut, Settings, LayoutDashboard, Wallet, Check, Smartphone } from 'lucide-react'
 import { logout } from '@/app/dashboard/actions'
 
 import {
@@ -118,6 +118,13 @@ export function UserNav({ firstName, lastName, email, role, accounts = [], fallb
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
+
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard/settings/devices" className="flex items-center w-full cursor-pointer">
+            <Smartphone className="mr-2 size-4" />
+            <span>Přihlášená zařízení</span>
+          </Link>
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
         

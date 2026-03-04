@@ -1,15 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { login, signup } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-
-// Hook Form + Zod
+import { Loader2, ShieldAlert, WalletCards } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { loginSchema, signupSchema } from "@/schemas/login-register";
@@ -23,19 +22,18 @@ import {
 } from "@/components/ui/form";
 import z from "zod";
 
-// 1. ZOD SCHÉMATA PRO VALIDACI
-
-
 export default function LoginPage() {
   const [isPending, setIsPending] = useState(false);
+  
+  // Čtení query parametru ?reason=inactivity z URL
+  const searchParams = useSearchParams();
+  const reason = searchParams.get("reason");
 
-  // Inicializace formuláře pro PŘIHLÁŠENÍ
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
 
-  // Inicializace formuláře pro REGISTRACI
   const signupForm = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -44,19 +42,17 @@ export default function LoginPage() {
     },
   });
 
-  // Handler pro Login
   async function onLoginSubmit(values: z.infer<typeof loginSchema>) {
     setIsPending(true);
     const formData = new FormData();
-    formData.append('email', values.email);
-    formData.append('password', values.password);
+    formData.append("email", values.email);
+    formData.append("password", values.password);
 
     const res = await login({ error: null }, formData);
     if (res?.error) toast.error(res.error);
     setIsPending(false);
   }
 
-  // Handler pro Signup
   async function onSignupSubmit(values: z.infer<typeof signupSchema>) {
     setIsPending(true);
     const formData = new FormData();
@@ -71,10 +67,25 @@ export default function LoginPage() {
     <div className="flex justify-center items-center bg-background p-4 py-12 min-h-screen">
       <Card className="shadow-lg border-0 w-full max-w-xl">
         <CardHeader className="text-center">
+          {/* Logo */}
+          <div className="flex justify-center mb-3">
+            <div className="bg-primary p-3 rounded-xl text-primary-foreground">
+              <WalletCards className="size-7" />
+            </div>
+          </div>
           <CardTitle className="font-bold text-foreground text-3xl tracking-tight">Prime Pay</CardTitle>
           <CardDescription className="text-muted-foreground">Moderní digitální bankovnictví</CardDescription>
         </CardHeader>
+
         <CardContent>
+          {/* Banner pro automatické odhlášení */}
+          {reason === "inactivity" && (
+            <div className="flex items-center gap-3 bg-amber-500/10 mb-6 p-3 border border-amber-500/30 rounded-md text-amber-600 text-sm">
+              <ShieldAlert className="size-4 shrink-0" />
+              <p>Byli jste automaticky odhlášeni z důvodu neaktivity.</p>
+            </div>
+          )}
+
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid grid-cols-2 mb-6 w-full">
               <TabsTrigger value="login">Přihlášení</TabsTrigger>
@@ -92,7 +103,7 @@ export default function LoginPage() {
                     <FormItem><FormLabel>Heslo</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <Button type="submit" className="mt-4 w-full h-11" disabled={isPending}>
-                    {isPending ? <Loader2 className="mr-2 w-4 h-4 animate-spin" /> : null}
+                    {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
                     Přihlásit se do bankovnictví
                   </Button>
                 </form>
@@ -112,7 +123,7 @@ export default function LoginPage() {
                       <FormItem><FormLabel>Příjmení</FormLabel><FormControl><Input placeholder="Novák" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                   </div>
-                  
+
                   <div className="gap-4 grid grid-cols-2">
                     <FormField control={signupForm.control} name="email" render={({ field }) => (
                       <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="jan@novak.cz" {...field} /></FormControl><FormMessage /></FormItem>
@@ -146,7 +157,7 @@ export default function LoginPage() {
                   </div>
 
                   <Button type="submit" className="mt-6 w-full h-11" disabled={isPending}>
-                    {isPending ? <Loader2 className="mr-2 w-4 h-4 animate-spin" /> : null}
+                    {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
                     Otevřít účet zdarma
                   </Button>
                 </form>
