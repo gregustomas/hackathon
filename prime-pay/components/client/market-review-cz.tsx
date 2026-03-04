@@ -95,13 +95,13 @@ function InstrumentRow({ instrument, compact = true }: { instrument: Instrument;
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 rounded-lg border bg-muted/20 px-3 py-2",
+        "flex justify-between items-center gap-3 bg-muted/20 px-3 py-2 border rounded-lg",
         "hover:bg-muted/30 transition-colors"
       )}
     >
       <div className="min-w-0">
-        <div className="font-semibold leading-5 truncate">{instrument.symbol}</div>
-        <div className="text-xs text-muted-foreground truncate">{instrument.name}</div>
+        <div className="font-semibold truncate leading-5">{instrument.symbol}</div>
+        <div className="text-muted-foreground text-xs truncate">{instrument.name}</div>
       </div>
 
       <Sparkline
@@ -111,11 +111,11 @@ function InstrumentRow({ instrument, compact = true }: { instrument: Instrument;
       />
 
       <div className="text-right shrink-0">
-        <div className={cn("font-mono text-xs font-semibold tabular-nums", up ? "text-emerald-600" : "text-rose-600")}>
+        <div className={cn("font-mono font-semibold tabular-nums text-xs", up ? "text-emerald-600" : "text-rose-600")}>
           {up ? "+" : ""}
           {formatNumber(change, 2)}%
         </div>
-        <div className="font-mono text-xs tabular-nums text-muted-foreground">
+        <div className="font-mono tabular-nums text-muted-foreground text-xs">
           {formatNumber(last, instrument.decimals)}
         </div>
       </div>
@@ -125,15 +125,15 @@ function InstrumentRow({ instrument, compact = true }: { instrument: Instrument;
 
 function InstrumentRowSkeleton() {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/20 px-3 py-2">
-      <div className="min-w-0 flex-1 space-y-1">
-        <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-3 w-36" />
+    <div className="flex justify-between items-center gap-3 bg-muted/20 px-3 py-2 border rounded-lg">
+      <div className="flex-1 space-y-1 min-w-0">
+        <Skeleton className="w-20 h-4" />
+        <Skeleton className="w-36 h-3" />
       </div>
-      <Skeleton className="h-7 w-20" />
-      <div className="w-18 space-y-1 text-right">
-        <Skeleton className="ml-auto h-3 w-14" />
-        <Skeleton className="ml-auto h-3 w-16" />
+      <Skeleton className="w-20 h-7" />
+      <div className="space-y-1 w-18 text-right">
+        <Skeleton className="ml-auto w-14 h-3" />
+        <Skeleton className="ml-auto w-16 h-3" />
       </div>
     </div>
   );
@@ -195,7 +195,7 @@ export function MarketReviewCZCard({ initialData }: { initialData?: Instrument[]
 
   return (
     <Card>
-      <CardHeader className="space-y-3">
+      <CardHeader className="space-y-3 h-full">
         <div className="flex flex-wrap items-center gap-2">
           <CardTitle>Trhy</CardTitle>
           <Badge variant="secondary">CZK</Badge>
@@ -216,7 +216,7 @@ export function MarketReviewCZCard({ initialData }: { initialData?: Instrument[]
         ) : (
           <>
             {error ? (
-              <div className="flex items-start justify-between gap-3 rounded-lg border bg-muted/20 px-3 py-2 text-xs">
+              <div className="flex justify-between items-start gap-3 bg-muted/20 px-3 py-2 border rounded-lg text-xs">
                 <div className="min-w-0">
                   <div className="font-medium">Data se nepodařilo obnovit</div>
                   <div className="text-muted-foreground wrap-break-word">{error}</div>
@@ -235,13 +235,13 @@ export function MarketReviewCZCard({ initialData }: { initialData?: Instrument[]
           </>
         )}
 
-        <div className="flex items-center justify-between pt-1">
+        <div className="flex justify-between items-center pt-1">
           <div className="flex items-center gap-1.5">
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
+              className="w-7 h-7"
               disabled={!canPrev}
               onClick={() => setPage((p) => (p - 1 + pageCount) % pageCount)}
               aria-label="Předchozí"
@@ -257,7 +257,7 @@ export function MarketReviewCZCard({ initialData }: { initialData?: Instrument[]
                   aria-label={`Stránka ${i + 1}`}
                   onClick={() => setPage(i)}
                   className={cn(
-                    "h-1.5 w-1.5 rounded-full transition-colors",
+                    "rounded-full w-1.5 h-1.5 transition-colors",
                     i === page ? "bg-foreground" : "bg-muted-foreground/40 hover:bg-muted-foreground/70"
                   )}
                 />
@@ -268,7 +268,7 @@ export function MarketReviewCZCard({ initialData }: { initialData?: Instrument[]
               type="button"
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
+              className="w-7 h-7"
               disabled={!canNext}
               onClick={() => setPage((p) => (p + 1) % pageCount)}
               aria-label="Další"
@@ -279,7 +279,7 @@ export function MarketReviewCZCard({ initialData }: { initialData?: Instrument[]
 
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="link" className="h-auto px-0 text-sm">
+              <Button variant="link" className="px-0 h-auto text-sm">
                 Zobrazit trh
               </Button>
             </DialogTrigger>
@@ -291,7 +291,7 @@ export function MarketReviewCZCard({ initialData }: { initialData?: Instrument[]
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="max-h-[65svh] space-y-2 overflow-auto pr-1">
+              <div className="space-y-2 pr-1 max-h-[65svh] overflow-auto">
                 {loading ? (
                   Array.from({ length: pageSize }).map((_, i) => <InstrumentRowSkeleton key={i} />)
                 ) : (

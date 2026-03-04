@@ -217,10 +217,26 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
                         {/* Pohled Dítěte */}
                         {profile?.role === "CHILD" && (
-                            <div className="bg-muted p-4 rounded-md">
-                                <p className="text-sm">Tento účet je pod dohledem.</p>
-                                <p className="mt-1 font-medium">Váš rodič: {parentName || "Neznámý"}</p>
-                                <p className="mt-2 text-muted-foreground text-xs">Větší platby musí schválit váš rodič.</p>
+                            <div>
+                                {primaryAccount?.parent_account_id ? (
+                                    <div className="space-y-1 bg-muted p-4 rounded-md">
+                                        <p className="text-sm">Tento účet je pod dohledem.</p>
+                                        <p className="font-medium">Váš rodič: {parentName ?? "Načítání..."}</p>
+                                        <p className="text-muted-foreground text-xs">
+                                            Větší platby musí schválit váš rodič.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2 bg-destructive/10 p-4 border border-destructive/30 rounded-md">
+                                        <p className="font-medium text-destructive text-sm">
+                                            Nekonzistentní stav účtu
+                                        </p>
+                                        <p className="text-muted-foreground text-xs">
+                                            Váš účet má roli CHILD, ale není propojen s žádným rodičovským účtem.
+                                            Kontaktujte prosím svého bankéře pro nápravu.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -236,7 +252,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                 </Card>
 
                 {/* 3. Modul pro nastavení limitů karet (SKRYTO PRO BANKÉŘE A ADMINY) */}
-                {isClientOrChild && (
+                {profile?.role === "CLIENT" && (
                     <Card className="relative md:col-span-2 border-primary/20">
                         {isManagingChild && (
                             <div className="top-0 right-0 absolute bg-primary px-3 py-1 rounded-tr-lg rounded-bl-lg font-medium text-primary-foreground text-xs">
