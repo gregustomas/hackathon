@@ -22,6 +22,8 @@ export interface SupabaseCardRow {
     daily_limit: number;
     atm_limit: number;
     created_at: string;
+    card_name: string;
+    card_color: string;
 }
 
 
@@ -82,6 +84,8 @@ export default async function CardsPage({ searchParams }: { searchParams: Promis
         console.error("Chyba při načítání karet:", cardsError);
     }
 
+    console.log("dbCards[0]:", JSON.stringify(dbCards?.[0], null, 2));
+
     // 3. Mapování z DB struktury do Props struktury tvé komponenty
     // DB vrací snake_case (card_number), komponenta chce camelCase (cardNumber)
     const cards = (dbCards || []).map((card: SupabaseCardRow) => ({
@@ -92,7 +96,8 @@ export default async function CardsPage({ searchParams }: { searchParams: Promis
         is_active: card.is_active,
         daily_limit: card.daily_limit,
         accountId: card.account_id,
-
+        card_name: card.card_name,
+        card_color: card.card_color
     }));
 
     return (

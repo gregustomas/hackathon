@@ -113,7 +113,7 @@ export default async function ClientDashboard() {
   const cardsPromise = supabaseAdmin
     .from("cards")
     .select(
-      "id, account_id, card_number, expiry_date, cvv, is_active, daily_limit, atm_limit, created_at",
+      "id, account_id, card_number, expiry_date, cvv, is_active, daily_limit, atm_limit, created_at, card_name, card_color",
     )
     .eq("account_id", account.id)
     .order("created_at", { ascending: false });
@@ -172,6 +172,8 @@ export default async function ClientDashboard() {
     daily_limit: card.daily_limit,
     atm_limit: card.atm_limit,
     created_at: card.created_at,
+    card_name: card.card_name,
+    card_color: card.card_color,
   }));
 
   return (

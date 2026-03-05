@@ -19,6 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getCardGradient } from "@/lib/cards/card-colors";
 
 interface CardProps {
   id: string;
@@ -27,6 +28,8 @@ interface CardProps {
   cvv: string;
   is_active: boolean;
   daily_limit: number;
+  card_name?: string;
+  card_color?: string;
 }
 
 interface CardDisplayProps {
@@ -93,17 +96,27 @@ export function CardDisplay({ card, profileId, accountId }: CardDisplayProps) {
   return (
     <>
       <div
-        className={`relative p-6 rounded-xl shadow-lg border w-full max-w-90 overflow-hidden transition-opacity ${
-          !card.is_active
-            ? "opacity-70 grayscale"
-            : "bg-linear-to-tr from-slate-900 to-slate-700 text-white"
+        style={
+          card.is_active
+            ? { background: getCardGradient(card.card_color) }
+            : undefined
+        }
+        className={`relative p-6 rounded-xl shadow-lg border w-full max-w-90 overflow-hidden transition-opacity text-white ${
+          !card.is_active ? "opacity-70 grayscale bg-slate-800" : ""
         }`}
       >
         <div className="flex justify-between items-center mb-8">
           <div className="flex justify-center items-center bg-amber-200/80 opacity-80 border border-amber-400/50 rounded w-12 h-8">
             <div className="border border-amber-600/30 rounded-sm w-6 h-4" />
           </div>
-          <div className="font-bold text-slate-300 italic">Prime Pay</div>
+          <div className="flex flex-col items-end">
+            <span className="font-bold text-white/90 text-sm italic">Prime Pay</span>
+            {card.card_name && (
+              <span className="max-w-30 text-white/60 text-xs truncate">
+                {card.card_name}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="mb-4 font-mono text-xl tracking-widest">

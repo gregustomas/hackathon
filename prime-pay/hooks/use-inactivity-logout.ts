@@ -37,6 +37,7 @@ export const useInactivityLogout = (onLogout: () => void): UseInactivityLogoutRe
   }, []);
 
   const performLogout = useCallback(() => {
+    console.log("performLogout CALLED");
     clearAllTimers();
     setShowWarning(false);
     onLogout();
@@ -52,12 +53,14 @@ export const useInactivityLogout = (onLogout: () => void): UseInactivityLogoutRe
       setSecondsLeft((prev) => {
         if (prev <= 1) {
           if (countdownInterval.current) clearInterval(countdownInterval.current);
+          performLogout();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-  }, []);
+  }, [performLogout]);
+
 
   const resetTimers = useCallback(() => {
     setShowWarning(false);

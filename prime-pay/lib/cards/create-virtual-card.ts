@@ -1,3 +1,4 @@
+// lib/cards/create-virtual-card.ts
 import { randomInt } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -23,9 +24,21 @@ function genExpiryDate(): string {
 export async function createVirtualCardForAccount(opts: {
   supabaseAdmin: SupabaseClient;
   accountId: string;
+  cardName?: string;
+  cardColor?: string;
   dailyLimit?: number;
+  atmLimit?: number;
+  pin?: string;
 }) {
-  const { supabaseAdmin, accountId, dailyLimit = 5000 } = opts;
+  const {
+    supabaseAdmin,
+    accountId,
+    cardName = "Moje karta",
+    cardColor = "slate",
+    dailyLimit = 5000,
+    atmLimit = 0,
+    pin,
+  } = opts;
 
   const payload = {
     account_id: accountId,
@@ -33,13 +46,17 @@ export async function createVirtualCardForAccount(opts: {
     expiry_date: genExpiryDate(),
     cvv: genCvv(),
     is_active: true,
+    card_name: cardName,
+    card_color: cardColor,
     daily_limit: dailyLimit,
+    atm_limit: atmLimit,
+    pin: pin ?? null,
   };
 
   const { error } = await supabaseAdmin.from("cards").insert([payload]);
-  
+
   if (error) {
-      console.error("Chyba při generování karty:", error);
-      throw new Error("Nepodařilo se vygenerovat kartu: " + error.message);
+    console.error("Chyba při generování karty:", error);
+    throw new Error("Nepodařilo se vygenerovat kartu: " + error.message);
   }
 }
