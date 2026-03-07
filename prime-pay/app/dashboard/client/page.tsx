@@ -126,7 +126,7 @@ export default async function ClientDashboard() {
       .from("accounts")
       .select("id, account_number, profiles(first_name)")
       .eq("parent_account_id", account.id)
-      .returns<ChildAccountWithProfile[]>();
+      .overrideTypes<Array<ChildAccountWithProfile>, { merge: false}>();
 
     if (childAccounts && childAccounts.length > 0) {
       childAccountIds = childAccounts.map((acc) => acc.id);
@@ -154,11 +154,10 @@ export default async function ClientDashboard() {
   if (cardsError)
     console.error("Chyba při stahování karet:", cardsError.message);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const transactions: Transaction[] = (rawTransactions ?? []).map(
-    (transaction: any) => ({
+    (transaction: Transaction) => ({
       ...transaction,
-      sender: transaction.sender.length === 1 ? transaction.sender[0] : null,
+      sender: transaction.sender && Array.isArray(transaction.sender) && transaction.sender.length === 1 ? transaction.sender[0] : null,
     }),
   );
 
@@ -332,6 +331,7 @@ export default async function ClientDashboard() {
               accountNumber={account.account_number}
             />
           </div>
+          <RealtimeNotifications accountId={user.id}/>
         </div>
       </div>
     </div>
