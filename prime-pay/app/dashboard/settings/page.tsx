@@ -18,6 +18,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { Check, UserCog, ArrowLeft } from "lucide-react";
 import { getSavedRecipients, deleteRecipient } from "@/lib/recipients/actions";
 import { RecipientsManager } from "@/components/settings/recipients-manager";
+import { ChangePasswordForm } from "@/components/settings/change-password-form";
 
 interface ChildAccount {
   id: string;
@@ -182,7 +183,18 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                     </CardContent>
                 </Card>
 
-                {/* 2. Modul Správa rolí a rodiny */}
+                {/* 2. Změna hesla */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Změna hesla</CardTitle>
+                        <CardDescription>Pro změnu hesla zadejte nejprve to současné.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ChangePasswordForm />
+                    </CardContent>
+                </Card>
+
+                {/* 3. Modul Správa rolí a rodiny */}
                 <Card>
                     <CardHeader>
                         <CardTitle>Správa rolí a rodiny</CardTitle>

@@ -5,6 +5,55 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 
+export async function changePassword(
+    currentPassword: string,
+    newPassword: string
+): Promise<{ error: string | null }> {
+    const cookieStore = await cookies();
+
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll() { return cookieStore.getAll(); },
+                setAll(cookiesToSet) {
+                    try {
+                        cookiesToSet.forEach(({ name, value, options }) =>
+                            cookieStore.set(name, value, options)
+                        );
+                    } catch { }
+                },
+            },
+        }
+    );
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user?.email) return { error: "Nejste přihlášen." };
+
+    // Ověření současného hesla
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+    });
+    if (signInError) return { error: "Současné heslo není správné." };
+
+    if (currentPassword === newPassword) {
+        return { error: "Nové heslo musí být jiné než současné." };
+    }
+
+    const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+    });
+
+    if (updateError) {
+        if (updateError.status === 429) return { error: "Příliš mnoho pokusů, zkuste za chvíli." };
+        return { error: updateError.message };
+    }
+
+    return { error: null };
+}
+
 export async function unenrollMyMfa() {
     const cookieStore = await cookies();
     
