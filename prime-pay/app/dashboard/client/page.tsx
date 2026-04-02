@@ -27,6 +27,7 @@ import {
   PendingChildTransaction,
   ChildAccountWithProfile,
 } from "@/types/dashboard";
+import { getSavedRecipients } from "@/lib/recipients/actions";
 
 export default async function ClientDashboard() {
   const cookieStore = await cookies();
@@ -78,6 +79,8 @@ export default async function ClientDashboard() {
     { data: accountData, error: accountError },
     markets,
   ] = await Promise.all([profilePromise, accountPromise, marketsPromise]);
+
+  const savedRecipients = await getSavedRecipients(user.id);
 
   if (profileError)
     console.error("CHYBA NAČÍTÁNÍ PROFILU:", profileError.message);
@@ -248,6 +251,8 @@ export default async function ClientDashboard() {
               <PaymentForm
                 senderAccountId={account.id}
                 currentBalance={Number(account.balance)}
+                profileId={user.id}
+                savedRecipients={savedRecipients}
               />
             </CardContent>
           </Card>

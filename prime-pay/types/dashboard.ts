@@ -54,3 +54,9 @@ export interface ChildAccountWithProfile {
 export interface Session {
     session_id: string;
 }
+
+export interface SavedRecipient {
+    id: string;
+    account_number: string;
+    label: string;
+}

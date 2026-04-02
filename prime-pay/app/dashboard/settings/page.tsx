@@ -16,10 +16,13 @@ import { CardLimitForm } from "@/components/client/card-limit-form";
 import { SupabaseCardRow } from "../cards/page";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Check, UserCog, ArrowLeft } from "lucide-react";
+import { getSavedRecipients, deleteRecipient } from "@/lib/recipients/actions";
+import { RecipientsManager } from "@/components/settings/recipients-manager";
 
 interface ChildAccount {
   id: string;
   account_number: string;
+  balance?: number;
   profiles: {
     first_name: string;
   } | null;
@@ -67,7 +70,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     // 3. Získání vlastních účtů
     const { data: ownAccounts } = await supabaseAdmin
         .from("accounts")
-        .select("id, account_number, is_child_account, parent_account_id")
+        .select("id, account_number, balance, is_child_account, parent_account_id")
         .eq("profile_id", user.id)
         .order("created_at", { ascending: true });
         
@@ -95,7 +98,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         if (foundOwn) {
             targetAccount = foundOwn;
         } else if (foundChild) {
-            targetAccount = foundChild as ChildAccount;
+            targetAccount = foundChild as unknown as typeof primaryAccount;
             isManagingChild = true;
         }
     }
@@ -130,6 +133,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
     // Zobrazení klientských funkcí jen pro klienty a děti
     const isClientOrChild = profile?.role === "CLIENT" || profile?.role === "CHILD";
+
+    // 8. PŘÍJEMCI PLATEB
+    const savedRecipients = isClientOrChild ? await getSavedRecipients(user.id) : [];
 
     return (
         <div className="space-y-6 py-8 cs-container">
@@ -298,6 +304,17 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                     </Card>
                 )}
             </div>
+
+            {/* Sekce: Adresář příjemců */}
+            {isClientOrChild && (
+                <RecipientsManager
+                    recipients={savedRecipients}
+                    profileId={user.id}
+                    primaryAccountId={primaryAccount?.id ?? ""}
+                    currentBalance={Number((primaryAccount as { balance?: number } | null)?.balance ?? 0)}
+                    deleteRecipientAction={deleteRecipient}
+                />
+            )}
         </div>
     );
 }

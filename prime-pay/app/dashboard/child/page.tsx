@@ -15,7 +15,8 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { CardDisplay } from "@/components/client/card-display";
 import { SupabaseCardRow } from "../cards/page";
 import { TransactionsCharts } from "@/components/client/transaction-charts";
-import { ShieldAlert, UserCheck, Clock, User } from "lucide-react";
+import { ShieldAlert, UserCheck, Clock } from "lucide-react";
+import { getSavedRecipients } from "@/lib/recipients/actions";
 
 interface ChildProfile {
     first_name: string;
@@ -125,7 +126,7 @@ export default async function ChildDashboard() {
 
     const cardsPromise = supabaseAdmin
         .from("cards")
-        .select("id, account_id, card_number, expiry_date, cvv, is_active, daily_limit, atm_limit, created_at")
+        .select("id, account_id, card_number, expiry_date, cvv, is_active, daily_limit, atm_limit, created_at, card_name, card_color")
         .eq("account_id", account.id)
         .order("created_at", { ascending: false });
 
@@ -162,7 +163,11 @@ export default async function ChildDashboard() {
         daily_limit: card.daily_limit,
         atm_limit: card.atm_limit,
         created_at: card.created_at,
+        card_name: card.card_name ?? null,
+        card_color: card.card_color ?? null,
     }));
+
+    const savedRecipients = await getSavedRecipients(user.id);
 
     return (
         <div className="space-y-8 py-8 cs-container">
@@ -265,6 +270,8 @@ export default async function ChildDashboard() {
                             <PaymentForm
                                 senderAccountId={account.id}
                                 currentBalance={Number(account.balance)}
+                                profileId={user.id}
+                                savedRecipients={savedRecipients}
                             />
                         </CardContent>
                     </Card>
