@@ -19,7 +19,9 @@ export async function proxy(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options),
@@ -38,13 +40,22 @@ export async function proxy(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  const { data: aalData } =
+    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   const aalLevel = aalData?.currentLevel;
 
   let hasMfaEnabled = false;
   if (user) {
     const { data: mfaList } = await supabase.auth.mfa.listFactors();
-    hasMfaEnabled = !!(mfaList?.totp && Array.isArray(mfaList.totp) && mfaList.totp.length > 0);
+    hasMfaEnabled = !!(
+      mfaList?.totp &&
+      Array.isArray(mfaList.totp) &&
+      mfaList.totp.length > 0
+    );
+  }
+
+  if (path === "/") {
+    return supabaseResponse;
   }
 
   // 1) Nepřihlášený – všechno kromě /login → /login
@@ -73,9 +84,12 @@ export async function proxy(request: NextRequest) {
         .maybeSingle();
 
       const currentSessionId = profileRow?.current_session_id ?? null;
-      const isStaleSession = !currentSessionId || currentSessionId !== sessionIdFromJwt;
-      const ip = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? null;
-
+      const isStaleSession =
+        !currentSessionId || currentSessionId !== sessionIdFromJwt;
+      const ip =
+        request.headers.get("x-forwarded-for") ??
+        request.headers.get("x-real-ip") ??
+        null;
 
       // stará/neplatná session → všechno kromě /login přesměruj na login
       if (isStaleSession) {
@@ -86,18 +100,16 @@ export async function proxy(request: NextRequest) {
         }
       } else {
         // aktuální session – aktualizujeme user_devices (pokud tabulka existuje)
-        await supabaseAdmin
-          .from("user_devices")
-          .upsert(
-            {
-              user_id: user.id,
-              session_id: sessionIdFromJwt,
-              user_agent: request.headers.get("user-agent") ?? null,
-              ip_address: ip,
-              last_seen_at: new Date().toISOString(),
-            },
-            { onConflict: "session_id" },
-          );
+        await supabaseAdmin.from("user_devices").upsert(
+          {
+            user_id: user.id,
+            session_id: sessionIdFromJwt,
+            user_agent: request.headers.get("user-agent") ?? null,
+            ip_address: ip,
+            last_seen_at: new Date().toISOString(),
+          },
+          { onConflict: "session_id" },
+        );
       }
     }
   }
@@ -116,7 +128,11 @@ export async function proxy(request: NextRequest) {
   }
 
   // 5) Role-routing pro /dashboard
-  if (user && path.startsWith("/dashboard") && (!hasMfaEnabled || aalLevel === "aal2")) {
+  if (
+    user &&
+    path.startsWith("/dashboard") &&
+    (!hasMfaEnabled || aalLevel === "aal2")
+  ) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
@@ -129,7 +145,11 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/dashboard/client", request.url));
     }
 
-    if (path.startsWith("/dashboard/banker") && role !== "BANKER" && role !== "ADMIN") {
+    if (
+      path.startsWith("/dashboard/banker") &&
+      role !== "BANKER" &&
+      role !== "ADMIN"
+    ) {
       return NextResponse.redirect(new URL("/dashboard/client", request.url));
     }
 
