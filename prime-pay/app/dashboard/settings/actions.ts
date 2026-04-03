@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
+import { jwtDecode, type JwtPayload } from "jwt-decode";
 
 export async function changePassword(
     currentPassword: string,
@@ -49,6 +50,24 @@ export async function changePassword(
     if (updateError) {
         if (updateError.status === 429) return { error: "Příliš mnoho pokusů, zkuste za chvíli." };
         return { error: updateError.message };
+    }
+
+    // Po updateUser Supabase invaliduje session a vytvoří novou s novým session_id.
+    // getSession() vrací cached hodnotu — musíme použít refreshSession() pro nové tokeny.
+    // Bez uložení nového session_id by proxy vyhodnotila session jako stale → redirect loop.
+    const { data: { session: newSession } } = await supabase.auth.refreshSession();
+    if (newSession?.access_token) {
+        try {
+            type SessionClaims = JwtPayload & { session_id?: string };
+            const decoded = jwtDecode<SessionClaims>(newSession.access_token);
+            if (decoded.session_id) {
+                const supabaseAdmin = await createAdminClient();
+                await supabaseAdmin
+                    .from("profiles")
+                    .update({ current_session_id: decoded.session_id })
+                    .eq("id", user.id);
+            }
+        } catch { /* session_id se nepodařilo přečíst, nevadí */ }
     }
 
     return { error: null };
