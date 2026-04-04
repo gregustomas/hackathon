@@ -238,8 +238,8 @@ export default async function ClientDashboard() {
           </Card>
 
           {/* Formulář platby */}
-          <Card className="flex flex-col">
-            <CardHeader>
+          <Card className="flex-row">
+            <CardHeader className="flex-1">
               <CardTitle>Nová platba</CardTitle>
               <CardDescription>
                 {isChild
@@ -247,7 +247,7 @@ export default async function ClientDashboard() {
                   : "Převeďte peníze na jiný účet"}
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex-1">
+            <CardContent>
               <PaymentForm
                 senderAccountId={account.id}
                 currentBalance={Number(account.balance)}
