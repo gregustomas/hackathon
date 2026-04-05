@@ -10,7 +10,7 @@ const containerVariants = {
 };
 const itemVariants = {
   hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 120, damping: 14 } },
+  visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 120, damping: 14 } },
 };
 
 const spentPct = 64;
