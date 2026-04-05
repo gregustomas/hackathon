@@ -22,17 +22,17 @@ function NotificationFeed() {
           initial={{ opacity: 0, y: 8 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: i * 0.1 }}
-          className="flex items-center gap-3 px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-2xl"
+          className="flex items-center gap-3 px-3 md:px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-2xl"
         >
           <div className="w-8 h-8 rounded-full bg-white border border-zinc-200 flex items-center justify-center shrink-0 relative">
             <n.Icon size={13} className="text-zinc-600" />
-            {n.live && <span className="absolute top-0 right-0 h-2 w-2 bg-zinc-900 rounded-full border-2 border-white animate-pulse" />}
+            {n.live && <span className="absolute top-0 right-0 h-2 w-2 bg-primary rounded-full border-2 border-white animate-pulse" />}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-zinc-900 truncate leading-none mb-0.5">{n.title}</p>
             <p className="text-[11px] text-zinc-400 truncate">{n.subtitle}</p>
           </div>
-          <div className="text-right">
+          <div className="text-right shrink-0">
             <p className={`text-sm font-semibold tracking-tight ${n.value.startsWith("+") ? "text-zinc-900" : "text-zinc-500"}`}>
               {n.value}
             </p>
@@ -46,9 +46,9 @@ function NotificationFeed() {
 
 export function LiveActivityCard() {
   return (
-    <div className="bg-zinc-50 border border-zinc-200 rounded-[2rem] col-span-1 md:col-span-5 p-10 flex flex-col gap-8 min-h-95">
+    <div className="bg-zinc-50 border border-zinc-200 rounded-[2rem] col-span-1 md:col-span-5 p-6 md:p-10 flex flex-col gap-6 md:gap-8 min-h-80 md:min-h-95">
       <div>
-        <h3 className="text-2xl font-medium tracking-tight mb-2 text-zinc-950">Live Activity Feed</h3>
+        <h3 className="text-xl md:text-2xl font-medium tracking-tight mb-2 text-zinc-950">Live Activity Feed</h3>
         <p className="text-zinc-400 text-sm leading-relaxed max-w-xs">
           Instant alerts for every event across your financial ecosystem.
         </p>

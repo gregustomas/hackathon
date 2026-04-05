@@ -9,16 +9,17 @@ import { MoreFeaturesCard } from "./features/MoreFeaturesCard";
 
 export default function Features() {
   return (
-    <section className="py-24 max-w-7xl mx-auto px-6 flex flex-col gap-16">
+    <section className="py-16 md:py-24 max-w-7xl mx-auto px-4 md:px-6 flex flex-col gap-10 md:gap-16">
       {/* Header */}
       <div className="flex flex-col gap-3">
-        <h2 className="text-5xl md:text-6xl font-normal tracking-tighter leading-[1.05] text-zinc-950">
-          Everything you need <br />
+        <p className="text-sm text-zinc-400 uppercase tracking-widest font-medium">Features</p>
+        <h2 className="text-3xl sm:text-4xl md:text-6xl font-normal tracking-tighter leading-tight text-zinc-950">
+          Everything you need <br className="hidden sm:block" />
           <span className="text-zinc-400">to manage your money.</span>
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-8 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-8 gap-3 md:gap-4">
         {/* Row 1 */}
         <VirtualCardsCard />
         <FamilyAccountsCard />

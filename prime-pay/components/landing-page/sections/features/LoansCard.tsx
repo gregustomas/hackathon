@@ -64,12 +64,12 @@ function LoanStatusDemo() {
 
 export function LoansCard() {
   return (
-    <div className="bg-zinc-50 border border-zinc-200 rounded-[2rem] col-span-1 md:col-span-4 flex flex-col min-h-95 overflow-hidden">
-      <div className="flex-1 flex items-center justify-center px-10 pt-10">
+    <div className="bg-zinc-50 border border-zinc-200 rounded-[2rem] col-span-1 md:col-span-4 flex flex-col min-h-80 md:min-h-95 overflow-hidden">
+      <div className="flex-1 flex items-center justify-center px-6 md:px-10 pt-6 md:pt-10">
         <LoanStatusDemo />
       </div>
-      <div className="p-10">
-        <h3 className="text-2xl font-medium tracking-tight mb-2 text-zinc-950">Loans & Credit</h3>
+      <div className="p-6 md:p-10">
+        <h3 className="text-xl md:text-2xl font-medium tracking-tight mb-2 text-zinc-950">Loans & Credit</h3>
         <p className="text-zinc-400 text-sm leading-relaxed">
           Apply for a loan in minutes. Bankers review and approve requests — track your repayment progress in real-time.
         </p>

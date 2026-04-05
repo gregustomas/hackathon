@@ -125,12 +125,12 @@ function FamilyApprovalDemo() {
 
 export function FamilyAccountsCard() {
   return (
-    <div className="bg-white border border-zinc-200 rounded-[2rem] col-span-1 md:col-span-4 flex flex-col min-h-135 overflow-hidden">
-      <div className="flex-1 flex items-center justify-center px-10 pt-10">
+    <div className="bg-white border border-zinc-200 rounded-[2rem] col-span-1 md:col-span-4 flex flex-col min-h-80 md:min-h-135 overflow-hidden">
+      <div className="flex-1 flex items-center justify-center px-6 md:px-10 pt-6 md:pt-10">
         <FamilyApprovalDemo />
       </div>
-      <div className="p-10">
-        <h3 className="text-2xl font-medium tracking-tight mb-2 text-zinc-950">Family Sub-accounts</h3>
+      <div className="p-6 md:p-10">
+        <h3 className="text-xl md:text-2xl font-medium tracking-tight mb-2 text-zinc-950">Family Sub-accounts</h3>
         <p className="text-zinc-400 text-sm leading-relaxed">
           Empower your children with financial literacy. Set limits and approve transactions directly from your device in real-time.
         </p>

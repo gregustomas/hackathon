@@ -20,11 +20,11 @@ function InstantTransferDemo() {
       {/* Recipient */}
       <div className="flex items-center gap-3 bg-white border border-zinc-200 rounded-2xl px-4 py-3">
         <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold shrink-0">P</div>
-        <div className="flex-1">
-          <p className="text-sm font-medium text-zinc-900">Pavel Kratochvíl</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-zinc-900 truncate">Pavel Kratochvíl</p>
           <p className="text-[11px] text-zinc-400 font-mono">9004·5318·0001</p>
         </div>
-        <CheckCircle size={14} className="text-zinc-300" />
+        <CheckCircle size={14} className="text-zinc-300 shrink-0" />
       </div>
 
       {/* Amount */}
@@ -62,12 +62,12 @@ function InstantTransferDemo() {
 
 export function InstantTransfersCard() {
   return (
-    <div className="bg-white border border-zinc-200 rounded-[2rem] col-span-1 md:col-span-4 flex flex-col min-h-95 overflow-hidden">
-      <div className="flex-1 flex items-center justify-center px-10 pt-10">
+    <div className="bg-white border border-zinc-200 rounded-[2rem] col-span-1 md:col-span-4 flex flex-col min-h-80 md:min-h-95 overflow-hidden">
+      <div className="flex-1 flex items-center justify-center px-6 md:px-10 pt-6 md:pt-10">
         <InstantTransferDemo />
       </div>
-      <div className="p-10">
-        <h3 className="text-2xl font-medium tracking-tight mb-2 text-zinc-950">Instant Transfers</h3>
+      <div className="p-6 md:p-10">
+        <h3 className="text-xl md:text-2xl font-medium tracking-tight mb-2 text-zinc-950">Instant Transfers</h3>
         <p className="text-zinc-400 text-sm leading-relaxed">
           Send money to anyone instantly. Save recipients to your address book for one-tap payments.
         </p>

@@ -68,7 +68,92 @@ const roles = [
   },
 ];
 
-export default function RolesSection() {
+// ─── Mobile layout — tab picker ───────────────────────────────────
+function MobileRoles() {
+  const [index, setIndex] = useState(0);
+  const active = roles[index];
+
+  return (
+    <section className="py-16 px-4 flex flex-col gap-8 md:hidden">
+      {/* Header */}
+      <div className="flex flex-col gap-2">
+        <p className="text-sm text-zinc-400 uppercase tracking-widest font-medium">System Roles</p>
+        <h2 className="text-3xl font-normal tracking-tighter text-zinc-950">
+          Four roles, <br />
+          <span className="text-zinc-400">one platform.</span>
+        </h2>
+      </div>
+
+      {/* Tab pills */}
+      <div className="flex gap-2 flex-wrap">
+        {roles.map((r, i) => (
+          <button
+            key={r.title}
+            onClick={() => setIndex(i)}
+            className={`text-sm font-medium px-4 py-2 rounded-xl border transition-colors ${
+              i === index
+                ? "bg-zinc-950 text-white border-zinc-950"
+                : "bg-white text-zinc-500 border-zinc-200 hover:border-zinc-400"
+            }`}
+          >
+            {r.title}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+          className="flex flex-col gap-6"
+        >
+          {/* Dashboard image */}
+          <div className="rounded-2xl overflow-hidden border border-zinc-200 shadow-lg">
+            <Image
+              src={active.image}
+              alt={`${active.title} dashboard`}
+              width={960}
+              height={600}
+              className="w-full h-auto"
+              priority
+            />
+          </div>
+
+          {/* Info */}
+          <div className="flex flex-col gap-4">
+            <div>
+              <p className="text-base font-semibold text-zinc-900">{active.subtitle}</p>
+              <p className="text-sm text-zinc-500 leading-relaxed mt-1">{active.desc}</p>
+            </div>
+
+            {/* Features */}
+            <div className="flex flex-col divide-y divide-zinc-100">
+              {active.features.map((feat, i) => (
+                <motion.div
+                  key={feat.label}
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.07 }}
+                  className="py-3 flex items-center gap-3 text-sm text-zinc-700"
+                >
+                  <feat.icon size={14} className="text-zinc-400 shrink-0" />
+                  {feat.label}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    </section>
+  );
+}
+
+// ─── Desktop layout — sticky scroll ───────────────────────────────
+function DesktopRoles() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -87,7 +172,7 @@ export default function RolesSection() {
   const active = roles[index];
 
   return (
-    <div ref={containerRef} className="relative h-[400vh]">
+    <div ref={containerRef} className="relative h-[400vh] hidden md:block">
       <section className="sticky top-0 h-screen overflow-hidden flex flex-col">
 
         {/* Scroll progress bar */}
@@ -96,8 +181,8 @@ export default function RolesSection() {
           style={{ scaleX: scrollYProgress }}
         />
 
-        {/* Main 3-column layout */}
-        <div className="flex-1 grid grid-cols-12 gap-8 items-center px-8 max-w-360 mx-auto w-full">
+        {/* 3-column layout */}
+        <div className="flex-1 grid grid-cols-12 gap-8 items-center px-8 max-w-screen-2xl mx-auto w-full">
 
           {/* LEFT — role identity + features */}
           <div className="col-span-3 flex flex-col gap-1">
@@ -110,15 +195,9 @@ export default function RolesSection() {
                 transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
                 className="flex flex-col divide-y divide-border"
               >
-                {/* Role identity block */}
                 <div className="pb-6 flex flex-col gap-1">
-                  <p className="text-xs text-muted-foreground font-normal">
-                    System Roles
-                  </p>
-                  <p className="text-2xl font-semibold tracking-tight">
-                    {active.title}
-                  </p>
-                  {/* Step indicators */}
+                  <p className="text-xs text-muted-foreground font-normal">System Roles</p>
+                  <p className="text-2xl font-semibold tracking-tight">{active.title}</p>
                   <div className="flex items-center gap-1.5 mt-2">
                     {roles.map((_, i) => (
                       <motion.div
@@ -131,9 +210,7 @@ export default function RolesSection() {
                   </div>
                 </div>
 
-                <p className="text-sm font-semibold py-4">
-                  Capabilities
-                </p>
+                <p className="text-sm font-semibold py-4">Capabilities</p>
                 {active.features.map((feat, i) => (
                   <motion.div
                     key={feat.label}
@@ -185,12 +262,8 @@ export default function RolesSection() {
                 transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
                 className="flex flex-col gap-3"
               >
-                <p className="text-sm font-medium text-foreground">
-                  {active.subtitle}
-                </p>
-                <p className="text-sm font-normal text-muted-foreground leading-relaxed">
-                  {active.desc}
-                </p>
+                <p className="text-sm font-medium text-foreground">{active.subtitle}</p>
+                <p className="text-sm font-normal text-muted-foreground leading-relaxed">{active.desc}</p>
               </motion.div>
             </AnimatePresence>
           </div>
@@ -198,5 +271,15 @@ export default function RolesSection() {
         </div>
       </section>
     </div>
+  );
+}
+
+// ─── Export ───────────────────────────────────────────────────────
+export default function RolesSection() {
+  return (
+    <>
+      <MobileRoles />
+      <DesktopRoles />
+    </>
   );
 }

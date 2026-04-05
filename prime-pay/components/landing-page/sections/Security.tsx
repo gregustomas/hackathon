@@ -27,25 +27,25 @@ export default function Security() {
   const inView = useInView(ref, { once: true, amount: 0.15 });
 
   return (
-    <section className="py-24 max-w-7xl mx-auto px-6">
-      <div className="grid grid-cols-1 md:grid-cols-8 gap-4">
+    <section className="py-16 md:py-24 max-w-7xl mx-auto px-4 md:px-6">
+      <div className="grid grid-cols-1 md:grid-cols-8 gap-3 md:gap-4">
 
         {/* Left — header */}
-        <div className="md:col-span-3 bg-primary rounded-[2rem] p-10 flex flex-col justify-between min-h-72">
+        <div className="md:col-span-3 bg-primary rounded-[2rem] p-6 md:p-10 flex flex-col justify-between gap-6 min-h-48 md:min-h-72">
           <div className="flex flex-col gap-3">
-            <p className="text-sm text-zinc-500 uppercase tracking-widest font-medium">Security</p>
-            <h2 className="text-4xl font-normal tracking-tighter leading-tight text-white">
+            <p className="text-sm text-white/40 uppercase tracking-widest font-medium">Security</p>
+            <h2 className="text-3xl md:text-4xl font-normal tracking-tighter leading-tight text-white">
               Built secure <br />
-              <span className="text-zinc-600">from day one.</span>
+              <span className="text-white/30">from day one.</span>
             </h2>
           </div>
-          <p className="text-sm text-zinc-500 leading-relaxed">
+          <p className="text-sm text-white/40 leading-relaxed">
             Every layer of PrimePay — from the database up to the browser — is protected by industry-standard security practices.
           </p>
         </div>
 
         {/* Right — list */}
-        <div ref={ref} className="md:col-span-5 bg-zinc-50 border border-zinc-200 rounded-[2rem] p-10 flex flex-col justify-center">
+        <div ref={ref} className="md:col-span-5 bg-zinc-50 border border-zinc-200 rounded-[2rem] p-6 md:p-10 flex flex-col justify-center">
           {layers.map((layer, i) => (
             <motion.div
               key={layer.label}
