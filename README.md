@@ -1,16 +1,14 @@
 # PrimePay
 
-> Bankovní platforma vytvořená za 48 hodin pro hackathon UTB — **2. místo** 🥈
+> Bankovní platforma pro hackathon UTB 2026 — **2. místo** 🥈
 
 **[→ Live demo](https://hackathon-kohl-mu.vercel.app/)**
-
-![PrimePay mockup](public/mockup-primepay.png)
 
 ---
 
 ## O projektu
 
-PrimePay je sofistikovaná bankovní platforma postavená na Next.js a Supabase. Projekt vznikl během 48hodinového hackathonu na Univerzitě Tomáše Bati ve Zlíně, kde se umístil na **2. místě**.
+PrimePay je bankovní platforma postavená na Next.js a Supabase. Projekt vznikl během 48hodinového hackathonu na Univerzitě Tomáše Bati ve Zlíně, kde se umístil na **2. místě**.
 
 Platforma pokrývá kompletní bankovní workflow — od správy účtů přes platby, půjčky, až po rodinné podúčty s rodičovským schválením transakcí.
 
@@ -73,7 +71,7 @@ Bezpečné prostředí s denními limity — platby nad limit vyžadují schvál
 
 ## Autoři
 
-Projekt vytvořili během 48 hodin:
+Projekt vytvořili:
 
 - **Ondřej Topínka** — [github.com/Topeez](https://github.com/Topeez)
 - **Tomáš Greguš** — [github.com/gregustomas](https://github.com/gregustomas)
