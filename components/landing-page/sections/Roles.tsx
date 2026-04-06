@@ -77,10 +77,10 @@ function MobileRoles() {
     <section className="py-16 px-4 flex flex-col gap-8 md:hidden">
       {/* Header */}
       <div className="flex flex-col gap-2">
-        <p className="text-sm text-zinc-400 uppercase tracking-widest font-medium">System Roles</p>
-        <h2 className="text-3xl font-normal tracking-tighter text-zinc-950">
+        <p className="text-sm text-muted-foreground uppercase tracking-widest font-medium">System Roles</p>
+        <h2 className="text-3xl font-normal tracking-tighter text-foreground">
           Four roles, <br />
-          <span className="text-zinc-400">one platform.</span>
+          <span className="text-muted-foreground">one platform.</span>
         </h2>
       </div>
 
@@ -92,8 +92,8 @@ function MobileRoles() {
             onClick={() => setIndex(i)}
             className={`text-sm font-medium px-4 py-2 rounded-xl border transition-colors ${
               i === index
-                ? "bg-zinc-950 text-white border-zinc-950"
-                : "bg-white text-zinc-500 border-zinc-200 hover:border-zinc-400"
+                ? "bg-foreground text-background border-foreground"
+                : "bg-card text-muted-foreground border-border hover:border-foreground/40"
             }`}
           >
             {r.title}
@@ -112,7 +112,7 @@ function MobileRoles() {
           className="flex flex-col gap-6"
         >
           {/* Dashboard image */}
-          <div className="rounded-2xl overflow-hidden border border-zinc-200 shadow-lg">
+          <div className="rounded-2xl overflow-hidden border border-border shadow-lg">
             <Image
               src={active.image}
               alt={`${active.title} dashboard`}
@@ -126,21 +126,21 @@ function MobileRoles() {
           {/* Info */}
           <div className="flex flex-col gap-4">
             <div>
-              <p className="text-base font-semibold text-zinc-900">{active.subtitle}</p>
-              <p className="text-sm text-zinc-500 leading-relaxed mt-1">{active.desc}</p>
+              <p className="text-base font-semibold text-foreground">{active.subtitle}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-1">{active.desc}</p>
             </div>
 
             {/* Features */}
-            <div className="flex flex-col divide-y divide-zinc-100">
+            <div className="flex flex-col divide-y divide-border">
               {active.features.map((feat, i) => (
                 <motion.div
                   key={feat.label}
                   initial={{ opacity: 0, x: -6 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.07 }}
-                  className="py-3 flex items-center gap-3 text-sm text-zinc-700"
+                  className="py-3 flex items-center gap-3 text-sm text-foreground/80"
                 >
-                  <feat.icon size={14} className="text-zinc-400 shrink-0" />
+                  <feat.icon size={14} className="text-muted-foreground shrink-0" />
                   {feat.label}
                 </motion.div>
               ))}

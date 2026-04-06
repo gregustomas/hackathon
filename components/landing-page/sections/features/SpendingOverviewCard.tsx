@@ -14,11 +14,11 @@ export function SpendingOverviewCard() {
   const inView = useInView(ref, { amount: 0.4 });
 
   return (
-    <div ref={ref} className="bg-white border border-zinc-200 rounded-[2rem] col-span-1 md:col-span-3 p-6 md:p-10 flex flex-col justify-between gap-6 min-h-80 md:min-h-95">
+    <div ref={ref} className="bg-card border border-border rounded-[2rem] col-span-1 md:col-span-3 p-6 md:p-10 flex flex-col justify-between gap-6 min-h-80 md:min-h-95">
       <div className="flex flex-col gap-1">
-        <p className="text-xs text-zinc-400 uppercase tracking-widest font-medium">This week</p>
-        <p className="text-2xl md:text-3xl font-semibold tracking-tight text-zinc-950">4 820 CZK</p>
-        <p className="text-xs text-zinc-400 flex items-center gap-1">
+        <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">This week</p>
+        <p className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">4 820 CZK</p>
+        <p className="text-xs text-muted-foreground flex items-center gap-1">
           <TrendingUp size={12} /> +12% vs last week
         </p>
       </div>
@@ -32,22 +32,22 @@ export function SpendingOverviewCard() {
                 initial={{ height: 0 }}
                 animate={inView ? { height: `${b.h}%` } : {}}
                 transition={{ duration: 0.6, delay: i * 0.06, ease: "easeOut" }}
-                className={`w-full rounded-md ${i === 3 ? "bg-primary" : "bg-zinc-200"}`}
+                className={`w-full rounded-md ${i === 3 ? "bg-primary" : "bg-muted"}`}
               />
             </div>
-            <span className={`text-[9px] md:text-[10px] font-medium ${i === 3 ? "text-zinc-950" : "text-zinc-400"}`}>{b.day}</span>
+            <span className={`text-[9px] md:text-[10px] font-medium ${i === 3 ? "text-foreground" : "text-muted-foreground"}`}>{b.day}</span>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 border-t border-zinc-100 pt-4 md:pt-6">
+      <div className="grid grid-cols-2 gap-3 border-t border-border pt-4 md:pt-6">
         <div>
-          <p className="text-[11px] text-zinc-400">Transactions</p>
-          <p className="text-sm font-semibold text-zinc-950">34 this week</p>
+          <p className="text-[11px] text-muted-foreground">Transactions</p>
+          <p className="text-sm font-semibold text-foreground">34 this week</p>
         </div>
         <div>
-          <p className="text-[11px] text-zinc-400">Largest expense</p>
-          <p className="text-sm font-semibold text-zinc-950">1 200 CZK</p>
+          <p className="text-[11px] text-muted-foreground">Largest expense</p>
+          <p className="text-sm font-semibold text-foreground">1 200 CZK</p>
         </div>
       </div>
     </div>

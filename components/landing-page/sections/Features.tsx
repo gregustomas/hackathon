@@ -12,10 +12,10 @@ export default function Features() {
     <section className="py-16 md:py-24 max-w-7xl mx-auto px-4 md:px-6 flex flex-col gap-10 md:gap-16">
       {/* Header */}
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-zinc-400 uppercase tracking-widest font-medium">Features</p>
-        <h2 className="text-3xl sm:text-4xl md:text-6xl font-normal tracking-tighter leading-tight text-zinc-950">
+        <p className="text-sm text-muted-foreground uppercase tracking-widest font-medium">Features</p>
+        <h2 className="text-3xl sm:text-4xl md:text-6xl font-normal tracking-tighter leading-tight text-foreground">
           Everything you need <br className="hidden sm:block" />
-          <span className="text-zinc-400">to manage your money.</span>
+          <span className="text-muted-foreground">to manage your money.</span>
         </h2>
       </div>
 

@@ -24,12 +24,14 @@ export default function Header() {
     <header className="sticky top-0 z-50">
       <motion.div
         animate={{
-          backgroundColor: scrolled || mobileOpen ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0)",
-          borderColor: scrolled || mobileOpen ? "rgba(0,0,0,0.08)" : "rgba(0,0,0,0)",
           backdropFilter: scrolled || mobileOpen ? "blur(16px)" : "blur(0px)",
         }}
         transition={{ duration: 0.25, ease: "easeOut" }}
-        className="border-b"
+        className={`border-b transition-colors duration-250 ${
+          scrolled || mobileOpen
+            ? "bg-background/95 border-border"
+            : "bg-transparent border-transparent"
+        }`}
       >
         {/* Main row */}
         <div className="flex items-center justify-between px-4 md:px-6 py-4">
@@ -63,7 +65,7 @@ export default function Header() {
 
             {/* Hamburger — mobile */}
             <button
-              className="md:hidden p-1.5 rounded-lg hover:bg-zinc-100 transition-colors"
+              className="md:hidden p-1.5 rounded-lg hover:bg-muted transition-colors"
               onClick={() => setMobileOpen((v) => !v)}
               aria-label="Toggle menu"
             >
@@ -88,7 +90,7 @@ export default function Header() {
                     <a
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
-                      className="block text-sm font-medium py-2.5 px-3 rounded-lg hover:bg-zinc-100 transition-colors"
+                      className="block text-sm font-medium py-2.5 px-3 rounded-lg hover:bg-muted transition-colors"
                     >
                       {link.label}
                     </a>

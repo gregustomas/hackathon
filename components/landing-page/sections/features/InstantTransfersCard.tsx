@@ -18,19 +18,19 @@ function InstantTransferDemo() {
       className="w-full max-w-75 flex flex-col gap-3"
     >
       {/* Recipient */}
-      <div className="flex items-center gap-3 bg-white border border-zinc-200 rounded-2xl px-4 py-3">
+      <div className="flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-3">
         <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold shrink-0">P</div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-zinc-900 truncate">Pavel Kratochvíl</p>
-          <p className="text-[11px] text-zinc-400 font-mono">9004·5318·0001</p>
+          <p className="text-sm font-medium text-foreground truncate">Pavel Kratochvíl</p>
+          <p className="text-[11px] text-muted-foreground font-mono">9004·5318·0001</p>
         </div>
-        <CheckCircle size={14} className="text-zinc-300 shrink-0" />
+        <CheckCircle size={14} className="text-muted-foreground/50 shrink-0" />
       </div>
 
       {/* Amount */}
-      <div className="bg-white border border-zinc-200 rounded-2xl px-4 py-4 flex items-center justify-between">
-        <span className="text-3xl font-semibold tracking-tight text-zinc-950">1 200</span>
-        <span className="text-sm font-medium text-zinc-400">CZK</span>
+      <div className="bg-card border border-border rounded-2xl px-4 py-4 flex items-center justify-between">
+        <span className="text-3xl font-semibold tracking-tight text-foreground">1 200</span>
+        <span className="text-sm font-medium text-muted-foreground">CZK</span>
       </div>
 
       {/* Send button */}
@@ -50,7 +50,7 @@ function InstantTransferDemo() {
             key="done"
             initial={{ opacity: 0, scale: 0.93 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full flex items-center justify-center gap-2 bg-zinc-50 border border-zinc-200 text-zinc-600 text-sm font-medium py-3 rounded-2xl"
+            className="w-full flex items-center justify-center gap-2 bg-muted/50 border border-border text-muted-foreground text-sm font-medium py-3 rounded-2xl"
           >
             <CheckCircle size={14} /> Sent successfully
           </motion.div>
@@ -62,13 +62,13 @@ function InstantTransferDemo() {
 
 export function InstantTransfersCard() {
   return (
-    <div className="bg-white border border-zinc-200 rounded-[2rem] col-span-1 md:col-span-4 flex flex-col min-h-80 md:min-h-95 overflow-hidden">
+    <div className="bg-card border border-border rounded-[2rem] col-span-1 md:col-span-4 flex flex-col min-h-80 md:min-h-95 overflow-hidden">
       <div className="flex-1 flex items-center justify-center px-6 md:px-10 pt-6 md:pt-10">
         <InstantTransferDemo />
       </div>
       <div className="p-6 md:p-10">
-        <h3 className="text-xl md:text-2xl font-medium tracking-tight mb-2 text-zinc-950">Instant Transfers</h3>
-        <p className="text-zinc-400 text-sm leading-relaxed">
+        <h3 className="text-xl md:text-2xl font-medium tracking-tight mb-2 text-foreground">Instant Transfers</h3>
+        <p className="text-muted-foreground text-sm leading-relaxed">
           Send money to anyone instantly. Save recipients to your address book for one-tap payments.
         </p>
       </div>

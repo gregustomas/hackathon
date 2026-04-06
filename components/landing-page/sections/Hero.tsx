@@ -50,17 +50,17 @@ export default function Hero() {
 
         {/* right — description + authors (desktop only) */}
         <div className="hidden md:flex max-w-xs flex-col justify-between h-full">
-          <p className="text-sm leading-relaxed text-zinc-600">
+          <p className="text-sm leading-relaxed text-muted-foreground">
             PrimePay is a sophisticated banking platform built with Next.js and
             Supabase in just 48 hours. It features four specialized roles and
             secured 2nd place at our school hackathon.
           </p>
           <div className="text-sm">
             <p className="font-medium mb-2">Created by</p>
-            <a href="https://github.com/Topeez" className="flex gap-2 items-center hover:text-zinc-600 transition-colors">
+            <a href="https://github.com/Topeez" className="flex gap-2 items-center hover:text-muted-foreground transition-colors">
               <FaGithub /> Ondřej Topínka
             </a>
-            <a href="https://github.com/gregustomas" className="flex gap-2 items-center hover:text-zinc-600 transition-colors">
+            <a href="https://github.com/gregustomas" className="flex gap-2 items-center hover:text-muted-foreground transition-colors">
               <FaGithub /> Tomáš Greguš
             </a>
           </div>
@@ -89,7 +89,7 @@ export default function Hero() {
         </motion.div>
 
         {/* authors — mobile only */}
-        <div className="md:hidden text-sm text-zinc-500 flex flex-col gap-1">
+        <div className="md:hidden text-sm text-muted-foreground flex flex-col gap-1">
           <a href="https://github.com/Topeez" className="flex gap-2 items-center">
             <FaGithub /> Ondřej Topínka
           </a>
