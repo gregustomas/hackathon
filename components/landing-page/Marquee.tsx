@@ -21,11 +21,11 @@ export const Marquee = ({ text, speed = 30 }: MarqueeProps) => {
         }}
       >
         {/* První sada textu */}
-        <span className="text-[12vw] font-black uppercase text-secondary/10 px-4">
+        <span className="text-[12vw] font-black uppercase text-white/20 px-4">
           {text}
         </span>
         {/* Druhá sada textu (kopie pro plynulý přechod) */}
-        <span className="text-[12vw] font-black uppercase text-secondary/10 px-4">
+        <span className="text-[12vw] font-black uppercase text-white/20 px-4">
           {text}
         </span>
       </motion.div>

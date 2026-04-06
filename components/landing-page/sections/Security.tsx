@@ -31,7 +31,7 @@ export default function Security() {
       <div className="grid grid-cols-1 md:grid-cols-8 gap-3 md:gap-4">
 
         {/* Left — header */}
-        <div className="md:col-span-3 bg-primary rounded-[2rem] p-6 md:p-10 flex flex-col justify-between gap-6 min-h-48 md:min-h-72">
+        <div className="md:col-span-3 bg-zinc-900 rounded-[2rem] p-6 md:p-10 flex flex-col justify-between gap-6 min-h-48 md:min-h-72">
           <div className="flex flex-col gap-3">
             <p className="text-sm text-white/40 uppercase tracking-widest font-medium">Security</p>
             <h2 className="text-3xl md:text-4xl font-normal tracking-tighter leading-tight text-white">
@@ -45,20 +45,20 @@ export default function Security() {
         </div>
 
         {/* Right — list */}
-        <div ref={ref} className="md:col-span-5 bg-zinc-50 border border-zinc-200 rounded-[2rem] p-6 md:p-10 flex flex-col justify-center">
+        <div ref={ref} className="md:col-span-5 bg-card border border-border rounded-[2rem] p-6 md:p-10 flex flex-col justify-center">
           {layers.map((layer, i) => (
             <motion.div
               key={layer.label}
               initial={{ opacity: 0, y: 10 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: i * 0.06, duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="group flex items-center gap-4 py-3.5 border-b border-zinc-200 last:border-0"
+              className="group flex items-center gap-4 py-3.5 border-b border-border last:border-0"
             >
-              <div className="w-8 h-8 rounded-xl bg-white border border-zinc-200 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:border-primary group-hover:text-white transition-colors duration-200">
-                <layer.icon size={14} className="text-zinc-500 group-hover:text-white transition-colors duration-200" />
+              <div className="w-8 h-8 rounded-xl bg-muted border border-border flex items-center justify-center shrink-0 group-hover:bg-zinc-900 group-hover:border-zinc-900 transition-colors duration-200">
+                <layer.icon size={14} className="text-muted-foreground group-hover:text-white transition-colors duration-200" />
               </div>
-              <p className="text-sm font-medium text-zinc-900 flex-1">{layer.label}</p>
-              <span className="font-mono text-[10px] text-zinc-400 hidden sm:block">
+              <p className="text-sm font-medium text-foreground flex-1">{layer.label}</p>
+              <span className="font-mono text-[10px] text-muted-foreground hidden sm:block">
                 {layer.tag}
               </span>
             </motion.div>

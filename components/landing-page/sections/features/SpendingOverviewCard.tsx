@@ -32,7 +32,7 @@ export function SpendingOverviewCard() {
                 initial={{ height: 0 }}
                 animate={inView ? { height: `${b.h}%` } : {}}
                 transition={{ duration: 0.6, delay: i * 0.06, ease: "easeOut" }}
-                className={`w-full rounded-md ${i === 3 ? "bg-primary" : "bg-muted"}`}
+                className={`w-full rounded-md ${i === 3 ? "bg-zinc-900 dark:bg-zinc-100" : "bg-muted"}`}
               />
             </div>
             <span className={`text-[9px] md:text-[10px] font-medium ${i === 3 ? "text-foreground" : "text-muted-foreground"}`}>{b.day}</span>

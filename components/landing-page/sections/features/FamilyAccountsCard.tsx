@@ -43,7 +43,7 @@ function FamilyApprovalDemo() {
       </motion.div>
 
       {/* Pending approval */}
-      <motion.div variants={itemVariants} className="bg-primary rounded-2xl p-4">
+      <motion.div variants={itemVariants} className="bg-zinc-900 rounded-2xl p-4">
         <div className="flex items-center justify-between mb-2">
           <span className="flex items-center gap-1.5 text-[11px] font-medium text-white/60 uppercase tracking-tight">
             <Clock size={11} /> Pending
@@ -100,7 +100,7 @@ function FamilyApprovalDemo() {
               initial={{ width: 0 }}
               animate={inView ? { width: `${spentPct}%` } : {}}
               transition={{ duration: 0.9, delay: 0.5, ease: "easeOut" }}
-              className="h-full bg-primary rounded-full"
+              className="h-full bg-zinc-900 rounded-full"
             />
           </div>
         </div>

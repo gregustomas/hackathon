@@ -33,7 +33,7 @@ function LoanStatusDemo() {
               initial={{ width: 0 }}
               animate={inView ? { width: "25%" } : {}}
               transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
-              className="h-full bg-primary rounded-full"
+              className="h-full bg-zinc-900 dark:bg-zinc-100 rounded-full"
             />
           </div>
         </div>
@@ -51,8 +51,8 @@ function LoanStatusDemo() {
       </div>
 
       <div className="flex items-center gap-3 bg-muted/50 border border-border rounded-2xl px-4 py-3">
-        <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shrink-0">
-          <Banknote size={13} className="text-white" />
+        <div className="w-7 h-7 rounded-full bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center shrink-0">
+          <Banknote size={13} className="text-white dark:text-zinc-900" />
         </div>
         <p className="text-xs text-muted-foreground">
           Approved by <span className="font-medium text-foreground">banker</span> in under 2 min

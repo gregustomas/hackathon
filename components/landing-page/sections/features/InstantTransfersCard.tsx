@@ -19,7 +19,7 @@ function InstantTransferDemo() {
     >
       {/* Recipient */}
       <div className="flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-3">
-        <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold shrink-0">P</div>
+        <div className="w-9 h-9 rounded-full bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-900 text-sm font-bold shrink-0">P</div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-foreground truncate">Pavel Kratochvíl</p>
           <p className="text-[11px] text-muted-foreground font-mono">9004·5318·0001</p>
@@ -41,7 +41,7 @@ function InstantTransferDemo() {
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => setSent(true)}
-            className="w-full bg-primary text-white text-sm font-semibold py-3 rounded-2xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"
+            className="w-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-sm font-semibold py-3 rounded-2xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
           >
             <Send size={14} /> Send now
           </motion.button>

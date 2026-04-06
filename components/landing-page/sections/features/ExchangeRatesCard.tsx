@@ -37,7 +37,7 @@ function RatesList() {
 
 export function ExchangeRatesCard() {
   return (
-    <div className="bg-primary rounded-[2rem] col-span-1 md:col-span-4 p-6 md:p-10 flex flex-col gap-6 md:gap-8">
+    <div className="bg-zinc-900 rounded-[2rem] col-span-1 md:col-span-4 p-6 md:p-10 flex flex-col gap-6 md:gap-8">
       <div>
         <h3 className="text-xl md:text-2xl font-medium tracking-tight mb-2 text-white">Live Exchange Rates</h3>
         <p className="text-white/40 text-sm leading-relaxed">

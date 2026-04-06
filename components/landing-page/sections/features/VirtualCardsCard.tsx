@@ -16,7 +16,7 @@ const cardIcons = [
 
 export function VirtualCardsCard() {
   return (
-    <div className="bg-primary rounded-[2rem] col-span-1 md:col-span-4 flex flex-col overflow-hidden min-h-80 md:min-h-135">
+    <div className="bg-zinc-900 rounded-[2rem] col-span-1 md:col-span-4 flex flex-col overflow-hidden min-h-80 md:min-h-135">
       <div className="flex-1 relative flex items-center justify-center pt-10 md:pt-12">
         {/* Orbit icons — hidden on small screens to avoid overflow */}
         {cardIcons.map((item, index) => (
